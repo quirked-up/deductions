@@ -1,0 +1,229 @@
+<!DOCTYPE HTML>
+<html>
+<body>
+	<div class=proof>
+		<div><span>1) </span><span>p</span><span>Prem</span></div>
+		<div class=proof>
+			<div><span>4) </span><span>!(q v !q)</span><span>Ass</span></div>
+			<div class=proof>
+				<div><span>8) </span><span>q</span><span>Ass</span></div>
+				<div><span>10) </span><span>(q v !q)</span><span>8, vI</span></div>
+				<div><span>9) </span><span>#</span><span>4,10, !E</span></div>
+			</div>
+			<div><span>7) </span><span>!q</span><span>8-9, !I</span></div>
+			<div><span>6) </span><span>(q v !q)</span>6, vI<span></span></div>
+			<div><span>5) </span><span>#</span><span>5,6, !E</span></div>
+		</div>
+		<div><span>3) </span><span>!!(q v !q)</span><span>4-5, !I</span></div>
+		<div><span>2) </span><span>q v !q</span><span>3, !!E</span></div>
+	</div>
+
+	<div class=proof>
+		<div><span>1) </span><span>!p v q</span><span>Prem</span></div>
+		<div>
+			<div class=proof>
+				<div><span>3) </span><span>!p</span><span>Ass</span></div>
+				<div class=proof>
+					<div><span>7) </span><span>p</span><span>Ass</span></div>
+					<div><span>9) </span><span>#</span><span>3,7, !E</span></div>
+					<div><span>8) </span><span>q</span><span>9, #E</span></div>
+				</div>
+				<div><span>4) </span><span>p -> q</span><span>7-8, ->I</span></div>
+			</div>
+			<div class=proof>
+				<div><span>5) </span><span>q</span><span>Ass</span></div>
+				<div class=proof>
+					<div><span>10) </span><span>p</span><span>Ass</span></div>
+					<div><span>11) </span><span>q</span><span>5</span></div>
+				</div>
+				<div><span>6) </span><span>p -> q</span><span>10-11, ->I</span></div>
+			</div>
+		</div>
+		<div><span>2) </span><span>p -> q</span><span>3-4,5-6,1, vE</span></div>
+	</div>
+
+
+	<div class=proof>
+		<div><span><input value=1>) </span><span><input value="!p v q"></span><span><input value="Prem"></span><button>X</button>=</div>
+		<div>
+			<div class=proof contenteditable>
+				<div><span>3) </span><span>!p</span><span>Ass</span></div>
+				<div class=proof>
+					<div><span>7) </span><span>p</span><span>Ass</span></div>
+					<span>:</span>
+					<div><span>8) </span><span>q</span><span>9, #E</span></div>
+				</div>
+				<div><span>4) </span><span>p -> q</span><span>7-8, ->I</span></div>
+			</div>
+			<div class=proof>
+				<div><span>5) </span><span>q</span><span>Ass</span></div>
+				<div class=proof>
+					<div><span>10) </span><span>p</span><span>Ass</span></div>
+					<div><span>11) </span><span>q</span><span>5</span></div>
+				</div>
+				<div><span>6) </span><span>p -> q</span><span>10-11, ->I</span></div>
+			</div>
+		</div>
+		<div><span>2) </span><span>p -> q</span><span>3-4,5-6,1, vE</span></div>
+	</div>
+
+	<br><br>
+	<div class=proof>
+		<div><span><input placeholder="1" value=1>) </span><span><input placeholder="" value="!p v q"></span><span><input placeholder="" value="Prem"></span></div>
+		<div><span><input placeholder="3">) </span><span><input placeholder=""></span><span><input placeholder=""></span></div>
+		<span>⋮</span>
+		<div><span><input placeholder="3">) </span><span><input placeholder=""></span><span><input placeholder=""></span></div>
+		<div><span><input placeholder="2" value=2>) </span><span><input placeholder="" value="p -> q"></span><span><input placeholder=""></span></div>
+	</div>
+	<br>
+	<div class=proof>
+		<div><span contenteditable>1</span><span contenteditable>!p v q</span><span contenteditable>Prem</span></div>
+		<div><span contenteditable></span><span contenteditable></span><span contenteditable></div>
+		<span>⋮</span>
+		<div><span contenteditable></span><span contenteditable></span><span contenteditable></div>
+		<div><span contenteditable>2</span><span contenteditable>p -> q</span><span contenteditable></div>
+	</div>
+	<br>
+
+
+	<div class=proof>
+		<div><span contenteditable>1</span><span contenteditable>!p v q</span><span contenteditable>Prem</span></div>
+		<div>
+			<div class=proof>
+				<div><span contenteditable>3</span><span contenteditable>!p</span><span contenteditable>Ass</span></div>
+				<div class=proof>
+					<div><span contenteditable>7</span><span contenteditable>p</span><span contenteditable>Ass</span></div>
+					<div><span contenteditable></span><span contenteditable></span><span contenteditable></span></div>
+					<span>⋮</span>
+					<div><span contenteditable></span><span contenteditable></span><span contenteditable></span></div>
+					<div><span contenteditable>8</span><span contenteditable>q</span><span contenteditable>9, #E</span></div>
+				</div>
+				<div><span contenteditable>4</span><span contenteditable>p -> q</span><span contenteditable>7-8, ->I</span></div>
+			</div>
+			<div class=proof>
+				<div><span contenteditable>5</span><span contenteditable>q</span><span contenteditable>Ass</span></div>
+				<div class=proof>
+					<div><span contenteditable>10</span><span contenteditable>p</span><span contenteditable>Ass</span></div>
+					<div><span contenteditable>11</span><span contenteditable>q</span><span contenteditable>5</span></div>
+				</div>
+				<div><span contenteditable>6</span><span contenteditable>p -> q</span><span contenteditable>10-11, ->I</span></div>
+			</div>
+		</div>
+		<div><span contenteditable>2</span><span contenteditable>p -> q</span><span contenteditable>3-4,5-6,1, vE</span></div>
+	</div>
+
+	<br><br>
+	<div class="proof pr2">
+		<div><span contenteditable>1</span><span contenteditable>!p v q</span><span contenteditable>Prem</span></div>
+		<div>
+			<div class="proof pr2">
+				<div><span contenteditable>3</span><span contenteditable>!p</span><span contenteditable>Ass</span></div>
+				<div class="proof pr2">
+					<div><span contenteditable>7</span><span contenteditable>p</span><span contenteditable>Ass</span></div>
+					<div><span contenteditable></span><span contenteditable></span><span contenteditable></span></div>
+					<span>⋮</span>
+					<div><span contenteditable></span><span contenteditable></span><span contenteditable></span></div>
+					<div><span contenteditable>8</span><span contenteditable>q</span><span contenteditable>9, #E</span></div>
+				</div>
+				<div><span contenteditable>4</span><span contenteditable>p -> q</span><span contenteditable>7-8, ->I</span></div>
+			</div>
+			<div class="proof pr2">
+				<div><span contenteditable>5</span><span contenteditable>q</span><span contenteditable>Ass</span></div>
+				<div class="proof pr2">
+					<div><span contenteditable>10</span><span contenteditable>p</span><span contenteditable>Ass</span></div>
+					<div><span contenteditable>11</span><span contenteditable>q</span><span contenteditable>5</span></div>
+				</div>
+				<div><span contenteditable>6</span><span contenteditable>p -> q</span><span contenteditable>10-11, ->I</span></div>
+			</div>
+		</div>
+		<div><span contenteditable>2</span><span contenteditable>p -> q</span><span contenteditable>3-4,5-6,1, vE</span></div>
+	</div>
+
+</body>
+<style>
+	.subproof {
+		padding-left: attr(data-level);
+	}
+
+
+	.proof.proof {
+		border: solid 1px black;
+		border-right: 0;
+		min-width: 40em;
+		width: fit-content;
+		height: fit-content;
+		margin: 0.4em;
+		padding: 0.4em;
+		margin-right: 0;
+		padding-right: 0;
+		display: flex;
+		flex-direction: column;
+	}
+	.proof div {
+		display: flex;
+		flex-direction: row;
+	}
+	.proof span {
+		margin: 0.1em;
+	}
+	.proof div>span:nth-child(2) {
+		flex: 1;
+	}
+	/*.proof div>div {
+		flex: 1;
+	}*/
+
+
+	.proof>span { /* style the ⋮ */
+		text-align: center;
+	}
+	.proof div>span:last-of-type>input { /* make reasoning right-aligned. automaticaly done by flex in non-input ones. */
+		text-align: right;
+	}
+	.proof input:not(:placeholder-shown) {
+		border-style: dotted;
+		border-color: #0007;
+	}
+
+	.proof span[contenteditable] {
+		display: inline;
+		margin: 0;
+		position: relative;
+	}
+
+	.proof span[contenteditable]:first-child {
+		margin-right: 1ch;
+	}
+	.proof span[contenteditable]:first-child::after {
+		content: ") ";
+		position: absolute;
+		left: 100%;
+	}
+	.proof span[contenteditable]:empty {
+		border: dotted #0007 2px;
+		padding-right: 3em;
+	}
+
+	.pr2>div:first-child {
+		margin-top: -1em;
+	}
+	.pr2.pr2 {
+		border-top: none;
+		position:relative;
+		/*padding: 0.5em;*/
+		min-width: 15em;
+		margin-left: 0.1em;
+	}
+	div:not(.pr2)>.pr2:nth-child(n+2) {
+		margin-left: 0.7em;
+	}
+	.pr2>div:first-child::before {
+		position: absolute;
+		top: 0;
+		left: 0;
+		border-top: solid 1px black;
+		content: "";
+		width: 0.4em;
+	}
+</style>
+</html>
