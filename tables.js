@@ -1,6 +1,11 @@
 const CURRENT = {}
 const TEMPLATES = {}
 function update_current(type, template_num) {
+	if (isNaN(template_num)) {
+		// custom
+		TEMPLATES[type].values[-1] = [...document.querySelectorAll(`input[name="${type}"][value=custom]~fieldset input`)].map(input => input.value);
+		template_num = -1
+	}
 	TEMPLATES[type].selected = template_num;
 	CURRENT[type] = TEMPLATES[type].values[template_num];
 }
