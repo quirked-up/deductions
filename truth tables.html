@@ -1,0 +1,87 @@
+<!DOCTYPE HTML>
+<html lang=en>
+	<head>
+		<meta charset="UTF-8">
+		
+		<style>
+			html {
+				font-family: sans-serif;
+			}
+			table { 
+				border-collapse: collapse; 
+			}
+			td {
+				text-align: center;
+			}
+			td:first-of-type { border-left: solid 1px black }
+			thead { border-bottom: solid 1px black }
+			.mainOperator { color: red }
+			.constant { color: #555; }
+			
+			input[value=custom] + label + fieldset { display: none }
+			input[value=custom]:checked + label + fieldset { display: block }
+			
+			.togglevisible:checked + fieldset * { display: none }
+			.togglevisible:checked + fieldset legend { display: block }
+			.togglevisible:checked + fieldset legend label { display: inline }
+			.togglevisible:checked + fieldset *:checked { display: inline }
+			.togglevisible:checked + fieldset *:checked + label { display: inline }
+			.togglevisible:checked + fieldset *:checked + label + fieldset { display: none }
+			
+			fieldset legend label::before { content: "▴";}
+			.togglevisible:checked + fieldset legend label::before { content: "▾" }
+		</style>
+	</head>
+	<body>
+		
+		<label>Formula: <input id=formula oninput="updateFormula()" placeholder="p∨¬p"></label>
+		
+		<hr>
+		
+		<div id=table>
+			<i>Truth table</i>
+		</div>
+		
+		<hr>
+		
+		<form oninput="if(!event.target.classList.contains('togglevisible')) updateFormula()">
+			<input class=togglevisible type=checkbox checked id=toggleconnective hidden>
+			<fieldset oninput="update_current('CONNECTIVES',+CONNECTIVES.value)">
+				<legend><label for=toggleconnective> Connective Symbols</label></legend>
+				<input type=radio name=CONNECTIVES id=cs0 value=0 checked> <label for=cs0>Modern Logic: ¬ ∧ ∨ ⊻ → ↔ </label><br>
+				<input type=radio name=CONNECTIVES id=cs1 value=1> <label for=cs1>Traditional Logic: ~ ∧ ∨ ⊻ ⊃ ≡ </label><br>
+				<input type=radio name=CONNECTIVES id=cs2 value=2> <label for=cs2>Programming: ! & | ^ → == </label><br>
+				<input type=radio name=CONNECTIVES id=cs3 value=3> <label for=cs3>Algebra: ¬ • + ⊕ → ≡ </label><br>
+				<input type=radio name=CONNECTIVES id=customconnectives value=custom> <label for=customconnectives>Custom</label>
+					<fieldset>
+						<legend>Custom connective symbols</legend>
+						<label>Negation (NOT): <input placeholder="¬ ~ !"></label><br>
+						<label>Conjunction (AND): <input placeholder="∧ & •"></label><br>
+						<label>Inclusive Disjunction (OR): <input placeholder="∨ | +"></label><br>
+						<label>Exclusive Disjunction (XOR): <input placeholder="⊻ ⊕"></label><br>
+						<label>Material Implication: <input placeholder="-> → ⊃"></label><br>
+						<label>Equivalence: <input placeholder="↔ ≡ <->"></label><br>
+					</fieldset>
+			</fieldset>
+			
+			<input class=togglevisible type=checkbox checked id=toggletruthsymb hidden>
+			<fieldset oninput="update_current('TRUE_FALSE_SYMBOLS',+TRUE_FALSE_SYMBOLS.value)">
+				<legend><label for=toggletruthsymb>Truth Symbols</label></legend> 
+				<input type=radio name=TRUE_FALSE_SYMBOLS value=0 id=ts0 checked><label for=ts0> T/F </label><br>
+				<input type=radio name=TRUE_FALSE_SYMBOLS value=1 id=ts1><label for=ts1> 1/0 </label><br>
+				<input type=radio name=TRUE_FALSE_SYMBOLS value=2 id=ts2><label for=ts2> ⊤/⊥ </label><br>
+				<input type=radio name=TRUE_FALSE_SYMBOLS value=custom value=custom id=customtruthsymb> <label for=customtruthsymb>Custom</label>
+					<fieldset>
+						<legend>Custom truth symbols</legend>
+						<label>Truth / Verum: <input placeholder="1 T ⊤"></label><br>
+						<label>False / Falsum / Contradiction: <input placeholder="0 F ⊥"></label><br>
+					</fieldset>
+			</fieldset>
+			
+			<label><input type=checkbox onclick="FORCE_PARENTHESES=this.checked"> Show implicit parentheses</label>
+		</form>
+		
+		<button onclick="generateLaTeX()">Generate LaTeX</button>
+		<script src="tables.js" onload="updateFormula()"></script>
+	</body>
+</html>
