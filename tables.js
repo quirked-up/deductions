@@ -38,10 +38,11 @@ class Token {
 			var longest_match = 0
 			type = null
 			for (let i=0; i<TYPES.length; i++) {
-				let match = TYPES[i].scan(string)
-				if (match && match[0].length > longest_match) {
-					type = TYPES[i]
-					longest_match = match[0].length
+				for (let j=0; j<TYPES[i].aliases.length; j++) {
+					if (TYPES[i].aliases[j].length > longest_match && string.startsWith(TYPES[i].aliases[j])) {
+						type = TYPES[i]
+						longest_match = TYPES[i].aliases[j].length
+					}
 				}
 			}
 			if (type == null) throw "Unrecognised token starting from: "+string
@@ -98,9 +99,9 @@ class Token {
 
 const TYPES = []
 class TokenType {
-	constructor(name, symbols, {post_args=()=>0, pre_args=()=>0, valuate=function(){throw "No valuation defined for "+this.name}, display=false} = {}) {
+	constructor(name, symbols='', {post_args=()=>0, pre_args=()=>0, valuate=function(){throw "No valuation defined for "+this.name}, display=false} = {}) {
 		this.name = name
-		this.scan = typeof(symbols)=="string" ? x=>symbols.includes(x[0])?[x[0]]:false : x=>symbols.exec(x)
+		this.aliases = typeof(symbols)=="string" ? symbols.split('') : symbols;
 		this.pre_args = typeof(pre_args)=="number"? ()=>pre_args : pre_args
 		this.post_args = typeof(post_args)=="number"? ()=>post_args : post_args
 		this.custom_display = display
@@ -109,18 +110,18 @@ class TokenType {
 	}
 }
 
-new TokenType("negation", /^(?:[!~¬]|\\lnot|NOT)/, {post_args:1, valuate:function(_){return !this.args[0].valuate(_)}, display:['CONNECTIVES',0]})
-new TokenType("disjunction", /^(?:[v∨|+]|\\lor|OR)/, {pre_args:1, post_args:1, valuate:function(_){return this.args.reduce((t,c)=>t||c.valuate(_),false)}, display:['CONNECTIVES',2]})
-new TokenType("conjunction", /^(?:[&∧^•.]|\\land|AND)/, {pre_args:1, post_args:1, valuate:function(_){return this.args.reduce((t,c)=>t&&c.valuate(_),true)}, display:['CONNECTIVES',1]})
-new TokenType("implication", /^(?:[>→⊃]|\\implies|->|IMPLIES)/, {pre_args:1, post_args:1, valuate:function(_){return !this.args[0].valuate(_) || this.args[1].valuate(_) }, display:['CONNECTIVES',4]})
-new TokenType("bi-implication", /^(?:<>|<->|=|==|\\leftrightarrow|IFF)/, {pre_args:1, post_args:1, valuate:function(_){return this.args[0].valuate(_) == this.args[1].valuate(_) }, display:['CONNECTIVES',5]})
-new TokenType("postfix operator", "'", {pre_args:1, valuate:function(_){return this.args[0].valuate(_)}})
-new TokenType("falsum", /^(?:[#F⊥0]|\\bot)/, {valuate: ()=>false, display:['TRUE_FALSE_SYMBOLS',0]})
-new TokenType("verum", /^(?:[T1⊥]|\\top)/, {valuate: ()=>true, display:['TRUE_FALSE_SYMBOLS',1]})
-const CONSTANTS = new TokenType("constant", "", {valuate: function([const_map]){return const_map[this.symbol]}})
-new TokenType("variable", "xyz")
-const RELATIONS = new TokenType("relation", "FGRS", {post_args:1, pre_args: f=>"RS".includes(f)?1:0, valuate: function([_,rel_map]){return this.args.reduce((t,c)=>t[c.symbol], rel_map[this.symbol])}})
 new TokenType("(", "(")
+const VARIABLES = new TokenType("variable")
+const RELATIONS = new TokenType("relation", "", {post_args:1, pre_args: f=>"RS".includes(f)?1:0, valuate: function([_,rel_map]){return this.args.reduce((t,c)=>t[c.symbol], rel_map[this.symbol])}})
+new TokenType("negation", ['!', '~', '¬', '\\lnot', 'NOT'], {post_args:1, valuate:function(_){return !this.args[0].valuate(_)}, display:['CONNECTIVES',0]})
+new TokenType("disjunction", ['v', '∨', '|', '||', '+', '\\lor', 'OR', '\\/'], {pre_args:1, post_args:1, valuate:function(_){return this.args.reduce((t,c)=>t||c.valuate(_),false)}, display:['CONNECTIVES',2]})
+new TokenType("conjunction", ['&', '∧', '^', '&&', '•', '.', '\\land', 'AND', '/\\'], {pre_args:1, post_args:1, valuate:function(_){return this.args.reduce((t,c)=>t&&c.valuate(_),true)}, display:['CONNECTIVES',1]})
+new TokenType("implication", ['>', '→', '⊃', '\\implies', '->', 'IMPLIES'], {pre_args:1, post_args:1, valuate:function(_){return !this.args[0].valuate(_) || this.args[1].valuate(_) }, display:['CONNECTIVES',4]})
+new TokenType("bi-implication", ['<>', '<->', '=', '==', '\\leftrightarrow', 'IFF'], {pre_args:1, post_args:1, valuate:function(_){return this.args[0].valuate(_) == this.args[1].valuate(_) }, display:['CONNECTIVES',5]})
+new TokenType("postfix operator", "'", {pre_args:1, valuate:function(_){return this.args[0].valuate(_)}})
+new TokenType("falsum", ['#','F','⊥','0','\\bot'], {valuate: ()=>false, display:['TRUE_FALSE_SYMBOLS',0]})
+new TokenType("verum", ['T','1','⊥','\\top'], {valuate: ()=>true, display:['TRUE_FALSE_SYMBOLS',1]})
+const CONSTANTS = new TokenType("constant", "", {valuate: function([const_map]){return const_map[this.symbol]}})
 
 function scan(txt) {
 	var stack = []
