@@ -333,3 +333,74 @@ function generateLaTeX() {
 	
 	CURRENT.CONNECTIVES = old_symbols
 }
+
+
+// make the unary predicate table interactable
+const unary_predicate_table = document.getElementById('unary-pred')
+unary_predicate_table.querySelector('input').indeterminate = true
+unary_predicate_table.addEventListener('input', ({target})=>{
+	if (target.type == "checkbox") {
+		const tr = target.parentElement.parentElement;
+		const num_columns = tr.childElementCount - 2; // -header -spacingcolumn
+		const num_rows = tr.parentElement.childElementCount;
+		
+		const [_, row, col] = target.id.split('-');
+
+		if (row == num_rows) {
+			// add row
+			const newRow = tr.parentElement.insertRow()
+			const head = document.createElement('th')
+			head.contentEditable = true;
+			newRow.append(head)
+			newRow.insertCell()
+			for (let i=0; i<num_columns; i++) {
+				const td = newRow.insertCell()
+				const input = document.createElement('input')
+				input.type = "checkbox"
+				input.indeterminate = true
+				input.id = `u-${num_rows+1}-${i+1}`
+				const label = document.createElement('label')
+				label.htmlFor = input.id
+				td.append(input, label)
+			}
+		}
+		if (col == num_columns) {
+			// add column
+			const head = document.createElement('th')
+			head.contentEditable = true
+			tr.parentElement.parentElement.tHead.rows[0].lastChild.before(head)
+			for (const [i, row] of Object.entries(tr.parentElement.children)) {
+				const td = row.insertCell()
+				const input = document.createElement('input')
+				input.type = "checkbox"
+				input.indeterminate = true
+				input.id = `u-${+i+1}-${num_columns+1}`
+				const label = document.createElement('label')
+				label.htmlFor = input.id
+				td.append(input, label)
+			}
+
+		}
+	}
+
+})
+const [upt_shrink_col, upt_shrink_row] = unary_predicate_table.querySelectorAll('button')
+upt_shrink_col.addEventListener('click', ()=> {
+	if (upt_shrink_col.parentElement.parentElement.cells.length <= 4) return; // preserve 1 header + 1 gap + 1 column to repopulate + 1 delete button
+	// remove last column and reset previous one, cant remove 2nd to last or it'll mess up the IDs
+	upt_shrink_col.parentElement.previousSibling.remove()
+	upt_shrink_col.parentElement.previousSibling.innerText = ''
+	;[...unary_predicate_table.tBodies[0].rows].forEach(row=> {
+			row.cells[row.cells.length-1].remove()
+			row.cells[row.cells.length-1].firstElementChild.indeterminate = true
+		}
+	)
+})
+upt_shrink_row.addEventListener('click', ()=>{
+	const final_tr = unary_predicate_table.tBodies[0].lastElementChild
+	if (final_tr.rowIndex < 2) return;
+
+	final_tr.previousElementSibling.firstElementChild.innerText = ''
+	;[...final_tr.previousElementSibling.cells].slice(2).forEach(cell=> cell.firstElementChild.indeterminate = true)
+	final_tr.remove()
+})

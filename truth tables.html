@@ -30,10 +30,42 @@
 			
 			fieldset legend label::before { content: "▴";}
 			.togglevisible:checked + fieldset legend label::before { content: "▾" }
+
+
+			/* style unary predicate table */
+			input[type=checkbox]{
+				position: absolute;
+				opacity: 0;
+			}
+			table label {
+				border: solid black 1px;
+				border-radius: 3px;
+				padding: 0 0.2em;
+			}
+			input:indeterminate+label {
+				border-color: #444;
+			}
+			input:focus+label {
+				border-color: red;
+			}
+			input[type=checkbox]+label::after{
+				content: "0";
+				width: 1em;
+				height: 1em;
+			}
+			input[type=checkbox]:checked+label::after{
+				content: "1";
+			}
+			input[type=checkbox]:indeterminate+label::after{
+				content: " ";
+			}
+
 		</style>
 	</head>
 	<body>
 		
+
+		<h2>Truth Table</h2>
 		<label>Formula: <input id=formula oninput="updateFormula()" placeholder="p∨¬p"></label>
 		
 		<hr>
@@ -42,6 +74,20 @@
 			<i>Truth table</i>
 		</div>
 		
+		<hr>
+
+		<h2>Domain & Predicates</h2>
+		<h3>Unary predicates</h3>
+		<table id="unary-pred">
+			<thead>
+				<tr><th></th><td></td><th contenteditable=true></th><td rowspan="2"><button>-</button></tr>
+			</thead>
+			<tbody>
+				<tr><th contenteditable=true></th><td></td><td><input type=checkbox id=u-1-1><label for=u-1-1></label></td></tr>
+			</tbody>
+			<tbody><tr><th colspan=2><button>-</button></th></tr></tbody>
+		</table>
+
 		<hr>
 		
 		<form oninput="if(!event.target.classList.contains('togglevisible')) updateFormula()">
