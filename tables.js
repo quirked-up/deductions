@@ -99,7 +99,7 @@ class Token {
 
 const TYPES = []
 class TokenType {
-	constructor(name, symbols='', {post_args=()=>0, pre_args=()=>0, valuate=function(){throw "No valuation defined for "+this.name}, display=false} = {}) {
+	constructor(name, symbols='', {post_args=()=>0, pre_args=()=>0, valuate=()=>undefined, display=false} = {}) {
 		this.name = name
 		this.aliases = typeof(symbols)=="string" ? symbols.split('') : symbols;
 		this.pre_args = typeof(pre_args)=="number"? ()=>pre_args : pre_args
@@ -112,7 +112,7 @@ class TokenType {
 
 new TokenType("(", "(")
 const VARIABLES = new TokenType("variable")
-const RELATIONS = new TokenType("relation", "", {post_args:1, pre_args: f=>"RS".includes(f)?1:0, valuate: function([_,rel_map]){return this.args.reduce((t,c)=>t[c.symbol], rel_map[this.symbol])}})
+const RELATIONS = new TokenType("relation", "", {post_args:1, pre_args: 0, valuate: function([_,rel_map]){return this.args.reduce((t,c)=>t[c.symbol], rel_map[this.symbol])}})
 new TokenType("negation", ['!', '~', '¬', '\\lnot', 'NOT'], {post_args:1, valuate:function(_){return !this.args[0].valuate(_)}, display:['CONNECTIVES',0]})
 new TokenType("disjunction", ['v', '∨', '|', '||', '+', '\\lor', 'OR', '\\/'], {pre_args:1, post_args:1, valuate:function(_){return this.args.reduce((t,c)=>t||c.valuate(_),false)}, display:['CONNECTIVES',2]})
 new TokenType("conjunction", ['&', '∧', '^', '&&', '•', '.', '\\land', 'AND', '/\\'], {pre_args:1, post_args:1, valuate:function(_){return this.args.reduce((t,c)=>t&&c.valuate(_),true)}, display:['CONNECTIVES',1]})
@@ -249,7 +249,7 @@ function generateSimpleTable(phrase) {
 		let td = document.createElement('td')
 		row.appendChild(td)
 		
-		appendValuationToTR(row, phrase, [variable_assignments, {}], 'td', true)
+		appendValuationToTR(row, phrase, [variable_assignments, relation_assignments], 'td', true)
 	}
 	return table
 }
@@ -337,9 +337,11 @@ function generateLaTeX() {
 
 
 // make the unary predicate table interactable
+var relation_assignments = {'': {'': undefined}}
 const unary_predicate_table = document.getElementById('unary-pred')
 unary_predicate_table.querySelector('input').indeterminate = true
 unary_predicate_table.addEventListener('input', ({target})=>{
+	r = target
 	if (target.type == "checkbox") {
 		const tr = target.parentElement.parentElement;
 		const num_columns = tr.childElementCount - 2; // -header -spacingcolumn
@@ -347,44 +349,81 @@ unary_predicate_table.addEventListener('input', ({target})=>{
 		
 		const [_, row, col] = target.id.split('-');
 
-		if (row == num_rows) {
-			// add row
-			const newRow = tr.parentElement.insertRow()
-			const head = document.createElement('th')
-			head.contentEditable = true;
-			newRow.append(head)
-			newRow.insertCell()
-			for (let i=0; i<num_columns; i++) {
-				const td = newRow.insertCell()
-				const input = document.createElement('input')
-				input.type = "checkbox"
-				input.indeterminate = true
-				input.id = `u-${num_rows+1}-${i+1}`
-				const label = document.createElement('label')
-				label.htmlFor = input.id
-				td.append(input, label)
-			}
-		}
-		if (col == num_columns) {
-			// add column
-			const head = document.createElement('th')
-			head.contentEditable = true
-			tr.parentElement.parentElement.tHead.rows[0].lastChild.before(head)
-			for (const [i, row] of Object.entries(tr.parentElement.children)) {
-				const td = row.insertCell()
-				const input = document.createElement('input')
-				input.type = "checkbox"
-				input.indeterminate = true
-				input.id = `u-${+i+1}-${num_columns+1}`
-				const label = document.createElement('label')
-				label.htmlFor = input.id
-				td.append(input, label)
-			}
+		if (row == num_rows)
+			addUptRow(tr.parentElement, num_rows, num_columns)
+		if (col == num_columns)
+			addUptCol(tr.parentElement, num_rows, num_columns)
 
+		// update object
+		console.log(unary_predicate_table.tHead.rows[0].cells[target.parentElement.cellIndex].innerText.trim(), tr.firstElementChild.innerText.trim())
+		relation_assignments[unary_predicate_table.tHead.rows[0].cells[target.parentElement.cellIndex].innerText.trim()]
+							[tr.firstElementChild.innerText.trim()] = target.checked
+	} else {
+		if (target.innerText.includes('\n')) // only trim if will make a difference, because it also resets the cursor
+			target.innerText = target.innerText.replaceAll('\n', '')
+
+		const tbody = unary_predicate_table.tBodies[0]
+		const num_rows = tbody.rows.length
+		const num_columns = unary_predicate_table.tHead.rows[0].cells.length - 3 // -header -spacingcolumn -button
+
+		if (target.cellIndex == 0) { // left headers
+			if (target.parentElement.nextElementSibling == null)
+				addUptRow(tbody, num_rows, num_columns)
+		} else { // top headers
+			if (target.cellIndex-1 == num_columns)
+				addUptCol(tbody, num_rows, num_columns)
 		}
+
+		update_upt_object()
 	}
 
 })
+function addUptRow(tbody, num_rows, num_columns) {
+	const newRow = tbody.insertRow()
+	const head = document.createElement('th')
+	head.contentEditable = true;
+	newRow.append(head)
+	newRow.insertCell()
+	for (let i=0; i<num_columns; i++) {
+		const td = newRow.insertCell()
+		const input = document.createElement('input')
+		input.type = "checkbox"
+		input.indeterminate = true
+		input.id = `u-${num_rows+1}-${i+1}`
+		const label = document.createElement('label')
+		label.htmlFor = input.id
+		td.append(input, label)
+	}
+}
+function addUptCol(tbody, num_rows, num_columns) {
+	const head = document.createElement('th')
+	head.contentEditable = true
+	tbody.parentElement.tHead.rows[0].lastChild.before(head)
+	for (const [i, row] of Object.entries(tbody.children)) {
+		const td = row.insertCell()
+		const input = document.createElement('input')
+		input.type = "checkbox"
+		input.indeterminate = true
+		input.id = `u-${+i+1}-${num_columns+1}`
+		const label = document.createElement('label')
+		label.htmlFor = input.id
+		td.append(input, label)
+	}
+}
+
+function update_upt_object() {
+	const trows = [...unary_predicate_table.tBodies[0].rows];
+	relation_assignments = Object.fromEntries([...unary_predicate_table.tHead.rows[0].cells].slice(2, -1).map((header, col)=>
+		[header.innerText.trim(), 
+			Object.fromEntries(trows.map(row=>
+				[row.cells[0].innerText.trim(), row.cells[col+2].firstElementChild.checked]
+			))
+		]
+	))
+	RELATIONS.aliases = Object.keys(relation_assignments).filter(x=>x)
+	VARIABLES.aliases = trows.map(row=>row.cells[0].innerText).filter(x=>x)
+}
+
 const [upt_shrink_col, upt_shrink_row] = unary_predicate_table.querySelectorAll('button')
 upt_shrink_col.addEventListener('click', ()=> {
 	if (upt_shrink_col.parentElement.parentElement.cells.length <= 4) return; // preserve 1 header + 1 gap + 1 column to repopulate + 1 delete button
