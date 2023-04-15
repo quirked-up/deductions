@@ -33,7 +33,12 @@
 
 
 			/* style unary predicate table */
-			input[type=checkbox]{
+			:root {
+				--TRUE_FALSE_SYMBOLS-0: "1";
+				--TRUE_FALSE_SYMBOLS-1 : "0";
+				--TRUE_FALSE_SYMBOLS-2 : " ";
+			}
+			table input[type=checkbox]{
 				position: absolute;
 				opacity: 0;
 			}
@@ -42,22 +47,30 @@
 				border-radius: 3px;
 				padding: 0 0.2em;
 			}
-			input:indeterminate+label {
+			table input:indeterminate+label {
 				border-color: #444;
 			}
-			input:focus+label {
+			table input:focus+label {
 				border-color: red;
 			}
-			input[type=checkbox]+label::after{
-				content: "0";
+			table input[type=checkbox]+label::after{
+				content: "1";
+				content: var(--TRUE_FALSE_SYMBOLS-1);
 				width: 1em;
 				height: 1em;
 			}
-			input[type=checkbox]:checked+label::after{
-				content: "1";
+			table input[type=checkbox]:checked+label::after{
+				content: "0";
+				content: var(--TRUE_FALSE_SYMBOLS-0);
 			}
-			input[type=checkbox]:indeterminate+label::after{
+			table input[type=checkbox]:indeterminate+label::after{
 				content: " ";
+				content: var(--TRUE_FALSE_SYMBOLS-2);
+			}
+
+			[data-placeholder]:empty::after {
+				content: attr(data-placeholder);
+				opacity: 0.4;
 			}
 
 		</style>
@@ -80,10 +93,10 @@
 		<h3>Unary predicates</h3>
 		<table id="unary-pred">
 			<thead>
-				<tr><th></th><td></td><th contenteditable=true></th><td rowspan="2"><button>-</button></tr>
+				<tr><th></th><td></td><th data-placeholder="P" contenteditable=true></th><td rowspan="2"><button>-</button></tr>
 			</thead>
 			<tbody>
-				<tr><th contenteditable=true></th><td></td><td><input type=checkbox id=u-1-1><label for=u-1-1></label></td></tr>
+				<tr><th data-placeholder="a" contenteditable=true></th><td></td><td><input type=checkbox id=u-1-1><label for=u-1-1></label></td></tr>
 			</tbody>
 			<tbody><tr><th colspan=2><button>-</button></th></tr></tbody>
 		</table>

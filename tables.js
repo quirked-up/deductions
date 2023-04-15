@@ -8,6 +8,12 @@ function update_current(type, template_num) {
 	}
 	TEMPLATES[type].selected = template_num;
 	CURRENT[type] = TEMPLATES[type].values[template_num];
+
+	// keep css in sync
+	if (type == 'TRUE_FALSE_SYMBOLS')
+	for (const [i, val] of Object.entries(CURRENT[type]))
+		document.body.style.setProperty(`--${type}-${i}`, JSON.stringify(val||" "));
+
 }
 function add_template(type, template_name, values) {
 	TEMPLATES[type].names.push(template_name)
@@ -23,7 +29,7 @@ update_current("CONNECTIVES", 0)
 TEMPLATES["TRUE_FALSE_SYMBOLS"] = {name: "Truth Symbols", hide_fields:true, fields: 2, names: [], values: []}
 add_template("TRUE_FALSE_SYMBOLS", "T/F", ['F', 'T', ''])
 add_template("TRUE_FALSE_SYMBOLS", "1/0", ['0', '1', ''])
-add_template("TRUE_FALSE_SYMBOLS", "⊤/⊥", ['⊥', '⊤', ''])
+add_template("TRUE_FALSE_SYMBOLS", "⊤/⊥", ['⊥', '⊤', ' '])
 update_current("TRUE_FALSE_SYMBOLS", 0)
 
 class Token {
