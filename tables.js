@@ -21,9 +21,9 @@ add_template("CONNECTIVES", "Algebra", ['¬', '•', '+', '⊕', '→', '≡'])
 update_current("CONNECTIVES", 0)
 
 TEMPLATES["TRUE_FALSE_SYMBOLS"] = {name: "Truth Symbols", hide_fields:true, fields: 2, names: [], values: []}
-add_template("TRUE_FALSE_SYMBOLS", "T/F", ['F', 'T'])
-add_template("TRUE_FALSE_SYMBOLS", "1/0", ['0', '1'])
-add_template("TRUE_FALSE_SYMBOLS", "⊤/⊥", ['⊥', '⊤'])
+add_template("TRUE_FALSE_SYMBOLS", "T/F", ['F', 'T', ''])
+add_template("TRUE_FALSE_SYMBOLS", "1/0", ['0', '1', ''])
+add_template("TRUE_FALSE_SYMBOLS", "⊤/⊥", ['⊥', '⊤', ''])
 update_current("TRUE_FALSE_SYMBOLS", 0)
 
 class Token {
@@ -99,28 +99,39 @@ class Token {
 
 const TYPES = []
 class TokenType {
-	constructor(name, symbols='', {post_args=()=>0, pre_args=()=>0, valuate=()=>undefined, display=false} = {}) {
+	constructor(name, symbols='', {post_args=()=>0, pre_args=()=>0, valuate=()=>INDETERMINATE, display=false} = {}) {
 		this.name = name
 		this.aliases = typeof(symbols)=="string" ? symbols.split('') : symbols;
 		this.pre_args = typeof(pre_args)=="number"? ()=>pre_args : pre_args
 		this.post_args = typeof(post_args)=="number"? ()=>post_args : post_args
 		this.custom_display = display
-		this.valuate = valuate
+		this.valuate = typeof(valuate)=="function" ? valuate 
+			: function(_) { return this.args.reduce((vals,arg)=>vals[+arg.valuate(_)], valuate) }  // truth table [[0, 1], [1, 1]] -> function args[0].valuate() || args[1].valuate()
 		TYPES.push(this)
 	}
 }
 
+const INDETERMINATE = 2
+
 new TokenType("(", "(")
 const VARIABLES = new TokenType("variable")
-const RELATIONS = new TokenType("relation", "", {post_args:1, pre_args: 0, valuate: function([_,rel_map]){return this.args.reduce((t,c)=>t[c.symbol], rel_map[this.symbol])}})
-new TokenType("negation", ['!', '~', '¬', '\\lnot', 'NOT'], {post_args:1, valuate:function(_){return !this.args[0].valuate(_)}, display:['CONNECTIVES',0]})
-new TokenType("disjunction", ['v', '∨', '|', '||', '+', '\\lor', 'OR', '\\/'], {pre_args:1, post_args:1, valuate:function(_){return this.args.reduce((t,c)=>t||c.valuate(_),false)}, display:['CONNECTIVES',2]})
-new TokenType("conjunction", ['&', '∧', '^', '&&', '•', '.', '\\land', 'AND', '/\\'], {pre_args:1, post_args:1, valuate:function(_){return this.args.reduce((t,c)=>t&&c.valuate(_),true)}, display:['CONNECTIVES',1]})
-new TokenType("implication", ['>', '→', '⊃', '\\implies', '->', 'IMPLIES'], {pre_args:1, post_args:1, valuate:function(_){return !this.args[0].valuate(_) || this.args[1].valuate(_) }, display:['CONNECTIVES',4]})
-new TokenType("bi-implication", ['<>', '<->', '=', '==', '\\leftrightarrow', 'IFF'], {pre_args:1, post_args:1, valuate:function(_){return this.args[0].valuate(_) == this.args[1].valuate(_) }, display:['CONNECTIVES',5]})
+const RELATIONS = new TokenType("relation", "", {post_args:1, pre_args: 0, 
+	valuate: function([_,rel_map]){return this.args.reduce((t,c)=>t[c.symbol], rel_map[this.symbol])} })
+new TokenType("negation", ['!', '~', '¬', '\\lnot', 'NOT'], {post_args:1, display:['CONNECTIVES',0], 
+	valuate: [1,0,INDETERMINATE] })
+new TokenType("disjunction", ['v', '∨', '|', '||', '+', '\\lor', 'OR', '\\/'], {pre_args:1, post_args:1, display:['CONNECTIVES',2], 
+	valuate: [[0,1,INDETERMINATE],[1,1,1],[INDETERMINATE,1,INDETERMINATE]] })
+new TokenType("conjunction", ['&', '∧', '^', '&&', '•', '.', '\\land', 'AND', '/\\'], {pre_args:1, post_args:1, display:['CONNECTIVES',1], 
+	valuate: [[0,0,0],[0,1,INDETERMINATE],[0,INDETERMINATE,INDETERMINATE]] })
+new TokenType("implication", ['>', '→', '⊃', '\\implies', '->', 'IMPLIES'], {pre_args:1, post_args:1, display:['CONNECTIVES',4], 
+	valuate: [[1,1,1],[0,1,INDETERMINATE], [INDETERMINATE,1,INDETERMINATE]] })
+new TokenType("bi-implication", ['<>', '<->', '=', '==', '\\leftrightarrow', 'IFF'], {pre_args:1, post_args:1, display:['CONNECTIVES',5],
+	valuate: [[1,0,INDETERMINATE],[0,1,INDETERMINATE], [INDETERMINATE,INDETERMINATE,INDETERMINATE]] })
 new TokenType("postfix operator", "'", {pre_args:1, valuate:function(_){return this.args[0].valuate(_)}})
-new TokenType("falsum", ['#','F','⊥','0','\\bot'], {valuate: ()=>false, display:['TRUE_FALSE_SYMBOLS',0]})
-new TokenType("verum", ['T','1','⊥','\\top'], {valuate: ()=>true, display:['TRUE_FALSE_SYMBOLS',1]})
+new TokenType("falsum", ['#','F','⊥','0','\\bot'], {display:['TRUE_FALSE_SYMBOLS',0],
+	valuate: false })
+new TokenType("verum", ['T','1','⊥','\\top'], { display:['TRUE_FALSE_SYMBOLS',1],
+	valuate: true })
 const CONSTANTS = new TokenType("constant", "", {valuate: function([const_map]){return const_map[this.symbol]}})
 
 function scan(txt) {
@@ -416,7 +427,7 @@ function update_upt_object() {
 	relation_assignments = Object.fromEntries([...unary_predicate_table.tHead.rows[0].cells].slice(2, -1).map((header, col)=>
 		[header.innerText.trim(), 
 			Object.fromEntries(trows.map(row=>
-				[row.cells[0].innerText.trim(), row.cells[col+2].firstElementChild.checked]
+				[row.cells[0].innerText.trim(), row.cells[col+2].firstElementChild.indeterminate ? INDETERMINATE : row.cells[col+2].firstElementChild.checked]
 			))
 		]
 	))
