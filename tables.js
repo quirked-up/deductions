@@ -192,6 +192,7 @@ const BINDING_VARIABLE = new TokenType("binding_variable")
 function scan(txt) {
 	var stack = []
 	var i = 0, lastRecognised = 0
+	BOUND_VARIABLES.aliases = []
 	while (i < txt.length) {
 		if (txt[i] == ')') {
 			collapseStack(stack)
