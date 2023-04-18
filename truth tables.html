@@ -74,6 +74,18 @@
 				opacity: 0.4;
 			}
 
+			/* style binary predicate tables */
+			#binary-preds {
+				display: flex;
+				flex-direction: row;
+				flex-wrap: wrap;
+			}
+			.binary-pred {
+				margin: 1em;
+			}
+
+
+
 			.binding_variable { /* can definitely do this better tbh, an svg at the least */
 				background: url(braces.webp);
 				background-size: 200% 120%;
@@ -119,6 +131,11 @@
 			</tbody>
 			<tbody><tr><th colspan=2><button>-</button></th></tr></tbody>
 		</table>
+
+		<h3>Binary predicates</h3>
+
+		<div id=binary-preds></div>
+		<button onclick=add_bpt()>+</button><button onclick=remove_bpt()>-</button><br>
 
 		<hr>
 		

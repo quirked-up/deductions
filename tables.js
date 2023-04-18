@@ -64,8 +64,8 @@ class Token {
 		} else this.symbol = string.slice(0, this.characters_consumed)
 		
 		this.type = type
-		this.pre_args = type.pre_args(string) || 0
-		this.post_args = type.post_args(string) || 0
+		this.pre_args = type.pre_args(this.symbol) || 0
+		this.post_args = type.post_args(this.symbol) || 0
 		this.valuate = type.valuate
 		this.index = type.index
 		
@@ -127,11 +127,16 @@ class Token {
 
 const TYPES = []
 class TokenType {
-	constructor(name, symbols='', {post_args=()=>0, pre_args=()=>0, valuate=()=>INDETERMINATE, display=false, quantifier=false, index} = {}) {
+	constructor(name, symbols='', {post_args=()=>0, pre_args=()=>0, args, valuate=()=>INDETERMINATE, display=false, quantifier=false, index} = {}) {
 		this.name = name
 		this.aliases = typeof(symbols)=="string" ? symbols.split('') : symbols;
-		this.pre_args = typeof(pre_args)=="number"? ()=>pre_args : pre_args
-		this.post_args = typeof(post_args)=="number"? ()=>post_args : post_args
+		if (args) {
+			this.pre_args  = s=>args(s)[0]
+			this.post_args = s=>args(s)[1]
+		} else {
+			this.pre_args  = typeof(pre_args) =="number"? ()=>pre_args : pre_args
+			this.post_args = typeof(post_args)=="number"? ()=>post_args : post_args
+		}
 		this.custom_display = display
 		this.valuate = typeof(valuate)=="function" ? valuate 
 			: function(_) { return this.args.reduce((vals,arg)=>vals[+arg.valuate(_)], valuate) }  // truth table [[0, 1], [1, 1]] -> function args[0].valuate() || args[1].valuate()
@@ -147,7 +152,8 @@ new TokenType("(", "(")
 const BOUND_VARIABLES = new TokenType("bound_variable", "", {
 	index: function ([_,__,quantifier_choices]) {  return quantifier_choices[this.depth - this.depth_from_quantifier] } })
 const VARIABLES = new TokenType("variable")
-const RELATIONS = new TokenType("relation", "", {post_args:1, pre_args: 0, 
+const relation_argcounts = []
+const RELATIONS = new TokenType("relation", "", {args: s=> relation_argcounts[RELATIONS.aliases.indexOf(s)], 
 	valuate: function(struct){ return this.args.reduce((t,c)=>t[c.index(struct)], struct[1][this.index(struct)]) } })
 new TokenType("negation", ['!', '~', '¬', '\\lnot', 'NOT'], {post_args:1, display:['CONNECTIVES',0], 
 	valuate: [1,0,INDETERMINATE] })
@@ -166,7 +172,6 @@ new TokenType("verum", ['T','1','⊥','\\top'], { display:['TRUE_FALSE_SYMBOLS',
 	valuate: true })
 new TokenType("universal_quantifier", ["A", "∀"], {post_args:2, display:["CONNECTIVES",6], quantifier: "VARIABLES",
 	valuate: function ([cm,rm,quantifier_choices]) { 
-		console.log(this.depth)
 		let indetermined = false
 		for (let i=0; i<VARIABLES.aliases.length; i++) { 
 			let val = this.args[1].valuate([cm,rm,quantifier_choices.slice(0,this.depth).concat(i)])
@@ -312,7 +317,8 @@ function generateSimpleTable(phrase) {
 		th.innerText = p
 		header.appendChild(th)
 	})
-	bound_variables.forEach(([depth,symbol])=>{
+	bound_variables.forEach(([depth,symbol], i)=>{
+		if (i>1 && bound_variables[i-1][0] == depth && bound_variables[i-1][1] == symbol) return;
 		let th = document.createElement('th')
 		th.innerText = symbol
 		header.appendChild(th)
@@ -477,37 +483,43 @@ function generateLaTeX() {
 
 
 // make the unary predicate table interactable
-var relation_assignments = [[]]
-const unary_predicate_table = document.getElementById('unary-pred')
-unary_predicate_table.querySelector('input').indeterminate = true
-unary_predicate_table.addEventListener('input', ({target, data})=>{
+const relation_assignments = []
+const UNARY_PREDICATE_TABLE = document.getElementById('unary-pred')
+var unary_pred_count = 0
+UNARY_PREDICATE_TABLE.querySelector('input').indeterminate = true
+UNARY_PREDICATE_TABLE.addEventListener('input', ({target, data})=>{
 	if (target.type == "checkbox") {
 		const tr = target.parentElement.parentElement;
 		const num_columns = tr.childElementCount - 2; // -header -spacingcolumn
-		const num_rows = tr.parentElement.childElementCount;
+		console.log(tr.children)
+		var num_rows = tr.parentElement.childElementCount;
 		
 		const [_, row, col] = target.id.split('-');
 
-		// update object
-		relation_assignments[target.parentElement.cellIndex-2][tr.rowIndex-1] = target.checked
-
-		if (row == num_rows)
-			addUptRow(tr.parentElement, num_rows, num_columns)
+		if (row == num_rows) {
+			addUptRow(tr.parentElement, num_rows++, num_columns)
+			add_bpt_rowcol()
+		}
 		if (col == num_columns)
 			addUptCol(tr.parentElement, num_rows, num_columns)
+
+		// update object
+		relation_assignments[target.parentElement.cellIndex-2][tr.rowIndex-1] = +target.checked
 
 	} else {
 		if (target.innerText.includes('\n')) // only trim if will make a difference, because it also resets the cursor
 			target.innerText = target.innerText.replaceAll('\n', '') // BUG: space at end is c
 
-		const tbody = unary_predicate_table.tBodies[0]
+		const tbody = UNARY_PREDICATE_TABLE.tBodies[0]
 		const num_rows = tbody.rows.length
-		const num_columns = unary_predicate_table.tHead.rows[0].cells.length - 3 // -header -spacingcolumn -button
+		const num_columns = UNARY_PREDICATE_TABLE.tHead.rows[0].cells.length - 3 // -header -spacingcolumn -button
 
 		if (target.cellIndex == 0) { // left headers
-			if (target.parentElement.nextElementSibling == null)
+			if (target.parentElement.nextElementSibling == null) {
 				addUptRow(tbody, num_rows, num_columns)
-			VARIABLES.aliases[target.parentElement.rowIndex-1] = target.innerText.trim()
+				add_bpt_rowcol()
+			}
+			set_var_name(target.parentElement.rowIndex-1, target.innerText.trim())
 		} else { // top headers
 			if (target.cellIndex-1 == num_columns)
 				addUptCol(tbody, num_rows, num_columns)
@@ -522,68 +534,134 @@ function addUptRow(tbody, num_rows, num_columns) {
 	head.contentEditable = true;
 	newRow.append(head)
 	newRow.insertCell()
-	for (let i=0; i<num_columns; i++) {
-		const td = newRow.insertCell()
-		const input = document.createElement('input')
-		input.type = "checkbox"
-		input.indeterminate = true
-		input.id = `u-${num_rows+1}-${i+1}`
-		const label = document.createElement('label')
-		label.htmlFor = input.id
-		td.append(input, label)
-	}
-	update_upt_object()
+	for (let i=0; i<num_columns; i++)
+		addCheckboxLabel(newRow, `u-${num_rows+1}-${i+1}`)
+	for (let i=0; i<num_columns-1; i++)	
+		relation_assignments[i][num_rows-1] = INDETERMINATE
+	VARIABLES.aliases.push('')
 }
 function addUptCol(tbody, num_rows, num_columns) {
 	const head = document.createElement('th')
 	head.contentEditable = true
 	tbody.parentElement.tHead.rows[0].lastChild.before(head)
-	for (const [i, row] of Object.entries(tbody.children)) {
-		const td = row.insertCell()
-		const input = document.createElement('input')
-		input.type = "checkbox"
-		input.indeterminate = true
-		input.id = `u-${+i+1}-${num_columns+1}`
-		const label = document.createElement('label')
-		label.htmlFor = input.id
-		td.append(input, label)
+	for (let i=0; i<num_rows; i++) {
+		addCheckboxLabel(tbody.rows[i], `u-${+i+1}-${num_columns+1}`)
 	}
-	update_upt_object()
+	relation_assignments.splice(num_columns-1, 0, Array(num_rows-1).fill(INDETERMINATE))
+	relation_argcounts.splice(num_columns-1, 0, [0,1])
+	RELATIONS.aliases.splice(unary_pred_count++, 0, '')
+}
+
+function addCheckboxLabel(tr, id) {
+	const input = document.createElement('input')
+	input.type = "checkbox"
+	input.indeterminate = true
+	input.id = id
+	const label = document.createElement('label')
+	label.htmlFor = id
+	tr.insertCell().append(input, label)
 }
 
 const range = n => Array(n).fill(0).map((_,i)=>i) // range(n) = [0,1,2,...,n-1], like python but not an iterator for simplicity, or APL's ι
-function update_upt_object() {
-	const trows = [...unary_predicate_table.tBodies[0].rows];
-	const headers = unary_predicate_table.tHead.rows[0].cells
 
-	const columns = headers.length - 3
-
-	relation_assignments = range(columns).map(col=> trows.map(row=>
-		row.cells[col+2].firstElementChild.indeterminate ? INDETERMINATE : row.cells[col+2].firstElementChild.checked
-	))
-	//console.log(relation_assignments.map(x=>x.map(x=>1*x).join(' ')).join('\n'))
-
-	RELATIONS.aliases = [...headers].slice(2,-2).map(x=>x.innerText.trim())
-	VARIABLES.aliases = trows.slice(0,-1).map(row=>row.cells[0].innerText)
-}
-
-const [upt_shrink_col, upt_shrink_row] = unary_predicate_table.querySelectorAll('button')
+const [upt_shrink_col, upt_shrink_row] = UNARY_PREDICATE_TABLE.querySelectorAll('button')
 upt_shrink_col.addEventListener('click', ()=> {
 	if (upt_shrink_col.parentElement.parentElement.cells.length <= 4) return; // preserve 1 header + 1 gap + 1 column to repopulate + 1 delete button
+	RELATIONS.aliases.splice(--unary_pred_count, 1)
 	// remove last column and reset previous one, cant remove 2nd to last or it'll mess up the IDs
 	upt_shrink_col.parentElement.previousSibling.remove()
 	upt_shrink_col.parentElement.previousSibling.innerText = ''
-	;[...unary_predicate_table.tBodies[0].rows].forEach(row=> {
+	;[...UNARY_PREDICATE_TABLE.tBodies[0].rows].forEach(row=> {
 			row.cells[row.cells.length-1].remove()
 			row.cells[row.cells.length-1].firstElementChild.indeterminate = true
 		}
 	)
 })
 upt_shrink_row.addEventListener('click', ()=>{
-	const final_tr = unary_predicate_table.tBodies[0].lastElementChild
+	const final_tr = UNARY_PREDICATE_TABLE.tBodies[0].lastElementChild
 	if (final_tr.rowIndex < 2) return;
+	VARIABLES.aliases.pop()
 
 	final_tr.previousElementSibling.firstElementChild.innerText = ''
 	;[...final_tr.previousElementSibling.cells].slice(2).forEach(cell=> cell.firstElementChild.indeterminate = true)
 	final_tr.remove()
 })
+
+const BINARY_PREDICATE_TABLES = document.getElementsByClassName('binary-pred')
+const BPT_CONTAINER = document.getElementById('binary-preds')
+function add_bpt_rowcol() {
+	const new_indx = VARIABLES.aliases.length-1
+	for (let table_num = 0; table_num < BPT_CONTAINER.children.length; table_num++) {
+		const table = BPT_CONTAINER.children[table_num];
+		// add new headers
+		const th = document.createElement('th')
+		table.tHead.rows[0].append(th)
+
+		const newrow = table.tBodies[0].insertRow()
+		newrow.appendChild(th.cloneNode())
+		newrow.insertCell()
+
+		// add inputs
+		for (let i=0; i<new_indx; i++)
+			addCheckboxLabel(newrow, `b-${table_num}-${new_indx+1}-${i+1}`)
+		for (let i=0; i<=new_indx; i++)
+			addCheckboxLabel(table.tBodies[0].rows[i], `b-${table_num}-${i+1}-${new_indx+1}`)
+
+		relation_assignments[table_num + unary_pred_count].forEach(row=>row.push(INDETERMINATE))
+		relation_assignments[table_num + unary_pred_count][new_indx] = Array(new_indx+1).fill(INDETERMINATE)
+	}
+}
+
+function add_bpt() {
+	const table_num = BPT_CONTAINER.childElementCount
+
+	const table = document.createElement('table')
+	table.classList = "true-false-grid binary-pred"
+	table.innerHTML = `<thead><th data-placeholder="R" contenteditable=true></th><td></td>${VARIABLES.aliases.map(v=>`<th>${v}</th>`).join('')}</thead>
+	<tbody>${VARIABLES.aliases.map((v,row)=>`<tr><th>${v}</th><td></td></tr>`).join('')}</tbody>`;
+
+	Array.prototype.forEach.call(table.tBodies[0].rows, (row, i)=> {
+		for (const j in VARIABLES.aliases)
+			addCheckboxLabel(row, `b-${+table_num}-${+i+1}-${+j+1}`)
+	})
+
+	BPT_CONTAINER.appendChild(table);
+	table.addEventListener('input', handle_bpt_input)
+
+	relation_assignments.splice(unary_pred_count + table_num, 0,
+		Array(VARIABLES.aliases.length).fill(0).map(x=>Array(VARIABLES.aliases.length).fill(INDETERMINATE)))
+	RELATIONS.aliases.splice(unary_pred_count + table_num, 0, '')
+	relation_argcounts.splice(unary_pred_count + table_num, 0, [1,1])
+}
+
+function remove_bpt() {
+	BPT_CONTAINER.lastElementChild.remove()
+	relation_assignments.splice(unary_pred_count + BPT_CONTAINER.childElementCount, 1)
+}
+
+function handle_bpt_input({target}) {
+	if (target.type == "checkbox") {
+		const [_,table,row,col] = target.id.split('-')
+		// for xRy, should x or y be the the column header?
+		// consistency with unary would have x as column
+		// but wikipedia and my lecturer use y
+		relation_assignments[+table + UNARY_PREDICATE_TABLE.rows[0].cells.length-4][col-1][row-1] = +target.checked
+	} else {
+		if (target.innerText.includes('\n')) // only trim if will make a difference, because it also resets the cursor
+			target.innerText = target.innerText.replaceAll('\n', '') // BUG: space at end is c
+
+		z = target
+		console.log(Array.prototype.indexOf.call(BPT_CONTAINER.children, target.parentElement.parentElement.parentElement))
+		RELATIONS.aliases[unary_pred_count + Array.prototype.indexOf.call(BPT_CONTAINER.children, target.parentElement.parentElement.parentElement)] = target.innerText
+	}
+}
+
+function set_var_name(index, newName) {
+	VARIABLES.aliases[index] = newName
+	// called after manually updating UPT, so we don't need to modify there
+	// modify BPTs
+	for (const table of BINARY_PREDICATE_TABLES) {
+		table.tHead.rows[0].cells[index+2].innerText = newName
+		table.tBodies[0].rows[index].cells[0].innerText = newName
+	}
+}
