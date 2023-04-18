@@ -12,6 +12,7 @@
 			}
 			td {
 				text-align: center;
+				padding: 0;
 			}
 			td:first-of-type { border-left: solid 1px black }
 			thead { border-bottom: solid 1px black }
@@ -38,32 +39,32 @@
 				--TRUE_FALSE_SYMBOLS-1 : "0";
 				--TRUE_FALSE_SYMBOLS-2 : " ";
 			}
-			table input[type=checkbox]{
+			.true-false-grid input[type=checkbox]{
 				position: absolute;
 				opacity: 0;
 			}
-			table label {
+			.true-false-grid label {
 				border: solid black 1px;
 				border-radius: 3px;
 				padding: 0 0.2em;
 			}
-			table input:indeterminate+label {
+			.true-false-grid input:indeterminate+label {
 				border-color: #444;
 			}
-			table input:focus+label {
+			.true-false-grid input:focus+label {
 				border-color: red;
 			}
-			table input[type=checkbox]+label::after{
+			.true-false-grid input[type=checkbox]+label::after{
 				content: "1";
 				content: var(--TRUE_FALSE_SYMBOLS-0);
 				width: 1em;
 				height: 1em;
 			}
-			table input[type=checkbox]:checked+label::after{
+			.true-false-grid input[type=checkbox]:checked+label::after{
 				content: "0";
 				content: var(--TRUE_FALSE_SYMBOLS-1);
 			}
-			table input[type=checkbox]:indeterminate+label::after{
+			.true-false-grid input[type=checkbox]:indeterminate+label::after{
 				content: " ";
 				content: var(--TRUE_FALSE_SYMBOLS-2);
 			}
@@ -77,6 +78,18 @@
 				background: url(braces.webp);
 				background-size: 200% 120%;
 				background-position: 30% 20%;
+			}
+
+			tr {
+				border-bottom: solid 1px black;
+			}
+
+
+			.relation {
+				color: green;
+			}
+			.parentheses {
+				visibility: hidden;
 			}
 
 		</style>
@@ -97,7 +110,7 @@
 
 		<h2>Domain & Predicates</h2>
 		<h3>Unary predicates</h3>
-		<table id="unary-pred">
+		<table id="unary-pred" class="true-false-grid">
 			<thead>
 				<tr><th></th><td></td><th data-placeholder="P" contenteditable=true></th><td rowspan="2"><button>-</button></tr>
 			</thead>
@@ -149,7 +162,20 @@
 			<label><input type=checkbox onclick="FORCE_PARENTHESES=this.checked"> Show implicit parentheses</label>
 		</form>
 		
-		<button onclick="generateLaTeX()">Generate LaTeX</button>
+		<label><input type=checkbox> Lines in table</label>
+
+		<table>
+			<thead>
+				<tr><th>Type <th>Hidden <th>Italic <th>Bold <th>Color
+			</thead>
+			<tr><th>Constants <td><input type=checkbox> <td><input type=checkbox> <td><input type=checkbox> <td><input type=color value=#555555>
+			<tr><th>Variables <td><input type=checkbox checked> <td><input type=checkbox checked> <td><input type=checkbox> <td><input type=color value=#555555>
+			<tr><th>Predicates <td><input type=checkbox> <td><input type=checkbox> <td><input type=checkbox> <td><input type=color value=#555555>
+			<tr><th>Connectives <td><input type=checkbox> <td><input type=checkbox> <td><input type=checkbox> <td><input type=color>
+			<tr><th>Main <td><input type=checkbox> <td><input type=checkbox> <td><input type=checkbox> <td><input type=color value=#ff0000> <td> (Top <input min=0 step=1 style="width:3em" value=1 type=number> connectives)</td>
+		</table><br>
+
+		<button onclick="generateLaTeX()">Generate LaTeX</button><br>
 		<script src="tables.js" onload="updateFormula()"></script>
 	</body>
 </html>

@@ -260,6 +260,8 @@ function appendValuationToTR(tr, token, structure, height, from_depth, elm='td',
 	if ((FORCE_PARENTHESES ? token.type !== CONSTANTS : token.parenthesised) && token.depth > from_depth) {
 		let td = document.createElement(elm)
 		td.rowSpan = VARIABLES.aliases.length ** (height - token.depth)
+		td.innerText = '('
+		td.classList.add("parentheses")
 		tr.appendChild(td);
 	}
 	
@@ -285,6 +287,8 @@ function appendValuationToTR(tr, token, structure, height, from_depth, elm='td',
 	if ((FORCE_PARENTHESES ? token.type !== CONSTANTS : token.parenthesised) && token.depth > from_depth) {
 		let td = document.createElement(elm)
 		td.rowSpan = VARIABLES.aliases.length ** (height - token.depth)
+		td.innerText = ')'
+		td.classList.add("parentheses")
 		tr.appendChild(td);
 	}
 }
@@ -473,7 +477,7 @@ function generateLaTeX() {
 
 
 // make the unary predicate table interactable
-var relation_assignments = {'': {'': undefined}}
+var relation_assignments = [[]]
 const unary_predicate_table = document.getElementById('unary-pred')
 unary_predicate_table.querySelector('input').indeterminate = true
 unary_predicate_table.addEventListener('input', ({target, data})=>{
