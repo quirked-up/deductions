@@ -55,13 +55,13 @@
 			}
 			table input[type=checkbox]+label::after{
 				content: "1";
-				content: var(--TRUE_FALSE_SYMBOLS-1);
+				content: var(--TRUE_FALSE_SYMBOLS-0);
 				width: 1em;
 				height: 1em;
 			}
 			table input[type=checkbox]:checked+label::after{
 				content: "0";
-				content: var(--TRUE_FALSE_SYMBOLS-0);
+				content: var(--TRUE_FALSE_SYMBOLS-1);
 			}
 			table input[type=checkbox]:indeterminate+label::after{
 				content: " ";
@@ -73,11 +73,17 @@
 				opacity: 0.4;
 			}
 
+			.binding_variable { /* can definitely do this better tbh, an svg at the least */
+				background: url(braces.webp);
+				background-size: 200% 120%;
+				background-position: 30% 20%;
+			}
+
 		</style>
 	</head>
 	<body>
 		
-
+		<hr>
 		<h2>Truth Table</h2>
 		<label>Formula: <input id=formula oninput="updateFormula()" placeholder="p∨¬p"></label>
 		
@@ -120,6 +126,8 @@
 						<label>Exclusive Disjunction (XOR): <input placeholder="⊻ ⊕"></label><br>
 						<label>Material Implication: <input placeholder="-> → ⊃"></label><br>
 						<label>Equivalence: <input placeholder="↔ ≡ <->"></label><br>
+						<label>Universal Quantifier: <input placeholder="∀"></label><br>
+						<label>Existential Quantifier: <input placeholder="∃"></label><br>
 					</fieldset>
 			</fieldset>
 			
