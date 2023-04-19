@@ -61,20 +61,61 @@
 				height: 1em;
 				border-bottom: dashed 1px black;
 			}
+
+			table {
+				caption-side: bottom;
+			}
+			table caption {
+				margin-top: 2em;
+			}
 		</style>
 	</head>
 
 	<body>
-
 		<table id=tree>
 			<tr><td><td contenteditable><td></td><td contenteditable></td>
 			<tr class=empty><td><td><button title="add node to branch">+</button> <button title="split branch">/\</button> <button title="close branch">X</button><td><td>
+			
+			<caption>
+				<button title="undo last action">Undo</button><button title="redo last action" disabled>Redo</button>
+			</caption>
 		</table>
 
+
+
 		<script>
+			const history = [[], []]
+
 			tree.addEventListener('input', fix_lines)
+			tree.addEventListener('input', ()=>{
+				history[1]=[]
+				tree.caption.lastElementChild.disabled = true
+			})
 			tree.addEventListener('click', ({target})=>{
 				if (target.tagName != 'BUTTON') return
+
+				let state
+				switch (target.title) {
+					case "undo last action":
+						history[1].push(tree.innerHTML)
+						tree.innerHTML = history[0].pop()
+						tree.caption.firstElementChild.disabled = (history[0].length == 0)
+						tree.caption.lastElementChild.disabled = false
+						return
+					
+					case "redo last action":
+						history[0].push(tree.innerHTML)
+						tree.innerHTML = history[1].pop()
+						tree.caption.firstElementChild.disabled = false
+						tree.caption.lastElementChild.disabled = (history[1].length == 0)
+						return
+						
+					default:
+						history[0].push(tree.innerHTML)
+						history[1] = []
+						tree.caption.firstElementChild.disabled = false
+						tree.caption.lastElementChild.disabled = true
+				}
 
 				const td = target.parentElement,
 				tr = td.parentElement
@@ -143,7 +184,6 @@
 						new_td.innerText = '🗸'
 						td.replaceWith(new_td)
 						break
-
 				}
 				fix_lines()
 			})
