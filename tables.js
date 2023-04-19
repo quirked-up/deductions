@@ -1,8 +1,11 @@
 // TODO:
-// rename to more sensible names
+// split code
 // n-ary predicates
+// =
+// tests
 // functions
 // second order quantifiers
+
 const CURRENT = {}
 const TEMPLATES = {}
 function update_current(type, template_num, initialisation=false) {
@@ -89,9 +92,9 @@ class Token {
 		this.complete = this.args_needed == 0
 		this.parenthesised = false
 
-		if (type == BOUND_VARIABLES) {
-			this.depth_from_quantifier = BOUND_VARIABLES.aliases.length - BOUND_VARIABLES.aliases.lastIndexOf(this.symbol)
-			//console.log(this.symbol, BOUND_VARIABLES.aliases.toString(), this.depth_from_quantifier)
+		if (type == VARIABLES) {
+			this.depth_from_quantifier = VARIABLES.aliases.length - VARIABLES.aliases.lastIndexOf(this.symbol)
+			//console.log(this.symbol, VARIABLES.aliases.toString(), this.depth_from_quantifier)
 		}
 	}
 	
@@ -102,28 +105,28 @@ class Token {
 		if (this.args_needed == 0) this.complete = true
 		if (this.type.quantifier) {
 			if (this.complete)
-				BOUND_VARIABLES.aliases.pop()
+				VARIABLES.aliases.pop()
 			else {
-				BOUND_VARIABLES.aliases.push(token.symbol)
-				token.type = BINDING_VARIABLE
+				VARIABLES.aliases.push(token.symbol)
+				token.type = BINDING_TERM
 			}
 		}
 	}
 	
-	extractConstants() {
-		if (this.type == CONSTANTS) return [this.symbol]
-		return this.args.flatMap(x=>x.extractConstants())
+	extractSentenceLetters() {
+		if (this.type == SENTENCE_LETTERS) return [this.symbol]
+		return this.args.flatMap(x=>x.extractSentenceLetters())
 	}
-	extractBoundVars() {
-		if (this.type == BINDING_VARIABLE) return [this.depth-1, this.symbol]
-		return this.args.flatMap(x=>x.extractBoundVars())
+	extractVars() {
+		if (this.type == BINDING_TERM) return [this.depth-1, this.symbol]
+		return this.args.flatMap(x=>x.extractVars())
 	}
 	
 	calcQuantifierHeight(depth=0) {
 		this.depth = depth
 		if (this.type.quantifier)
 			depth++
-		if (this.type == BINDING_VARIABLE) this.depth--
+		if (this.type == BINDING_TERM) this.depth--
 		return Math.max(0, ...this.args.map(x=>x.calcQuantifierHeight(depth))) + (this.type.quantifier!=false) 
 	}
 
@@ -159,9 +162,9 @@ class TokenType {
 const INDETERMINATE = 2
 
 new TokenType("(", "(")
-const BOUND_VARIABLES = new TokenType("bound_variable", "", {
+const VARIABLES = new TokenType("variable", "", {
 	index: function ([_,__,quantifier_choices]) {  return quantifier_choices[this.depth - this.depth_from_quantifier] } })
-const VARIABLES = new TokenType("variable")
+const CONSTANTS = new TokenType("constant")
 const relation_argcounts = []
 const RELATIONS = new TokenType("relation", "", {args: s=> relation_argcounts[RELATIONS.aliases.indexOf(s)], 
 	valuate: function(struct){ return this.args.reduce((t,c)=>t[c.index(struct)], struct[1][this.index(struct)]) } })
@@ -178,20 +181,20 @@ new TokenType("implication", ['>', '→', '⊃', '\\implies', '->', 'IMPLIES'], 
 new TokenType("bi-implication", ['<>', '<->', '=', '==', '\\leftrightarrow', 'IFF'], {pre_args:1, post_args:1, display:['CONNECTIVES',5],
 	valuate: [[1,0,INDETERMINATE],[0,1,INDETERMINATE], [INDETERMINATE,INDETERMINATE,INDETERMINATE]] }, "Equivalence")
 new TokenType("postfix operator", "'", {pre_args:1, valuate:function(_){return this.args[0].valuate(_)}})
-new TokenType("universal_quantifier", ["A", "∀"], {post_args:2, display:["CONNECTIVES",6], quantifier: "VARIABLES",
+new TokenType("universal_quantifier", ["A", "∀"], {post_args:2, display:["CONNECTIVES",6], quantifier: "CONSTANTS",
 	valuate: function ([cm,rm,quantifier_choices]) { 
 		let indetermined = false
-		for (let i=0; i<VARIABLES.aliases.length; i++) { 
+		for (let i=0; i<CONSTANTS.aliases.length; i++) { 
 			let val = this.args[1].valuate([cm,rm,quantifier_choices.slice(0,this.depth).concat(i)])
 			if (val == false) return false
 			if (val == INDETERMINATE) indetermined = true
 		}
 		return indetermined ? INDETERMINATE : true
 	} }, "Universal Quantifier")
-new TokenType("existential_quantifier", ["E", "∃"], {post_args:2, display:["CONNECTIVES",7], quantifier: "VARIABLES",
+new TokenType("existential_quantifier", ["E", "∃"], {post_args:2, display:["CONNECTIVES",7], quantifier: "CONSTANTS",
 	valuate: function ([cm,rm,quantifier_choices]) { 
 		let indetermined = false
-		for (let i=0; i<VARIABLES.aliases.length; i++) { 
+		for (let i=0; i<CONSTANTS.aliases.length; i++) { 
 			let val = this.args[1].valuate([cm,rm,quantifier_choices.slice(0,this.depth).concat(i)])
 			if (val == true) return true
 			if (val == INDETERMINATE) indetermined = true
@@ -202,14 +205,14 @@ new TokenType("falsum", ['#','F','⊥','0','\\bot'], {display:['TRUE_FALSE_SYMBO
 	valuate: false }, "False / Falsum / Contradiction")
 new TokenType("verum", ['T','1','⊥','\\top'], { display:['TRUE_FALSE_SYMBOLS',1],
 	valuate: true }, "Truth / Verum")
-const CONSTANTS = new TokenType("constant", "", {
+const SENTENCE_LETTERS = new TokenType("sentence_letter", "", {
 	valuate: function([const_map]){return const_map[this.symbol]} })
-const BINDING_VARIABLE = new TokenType("binding_variable", "", {disabled:true})
+const BINDING_TERM = new TokenType("BINDING_TERM", "", {disabled:true})
 
 function scan(txt) {
 	var stack = []
 	var i = 0, lastRecognised = 0
-	BOUND_VARIABLES.aliases = []
+	VARIABLES.aliases = []
 	while (i < txt.length) {
 		if (txt[i] == ')') {
 			collapseStack(stack)
@@ -240,7 +243,7 @@ function scan(txt) {
 					stack.pop()
 				}
 				i++;
-				stack.push(new Token(txt.slice(lastRecognised, i).trim(), stack, "constant"))
+				stack.push(new Token(txt.slice(lastRecognised, i).trim(), stack, "sentence_letter"))
 				var forced = true
 			}
 		}
@@ -255,7 +258,7 @@ function collapseStack(stack) {
 }
 FORCE_PARENTHESES = false
 function appendPhraseToTR(tr, token, elm='td', main_operator=false) {
-	if (FORCE_PARENTHESES ? token.type !== CONSTANTS : token.parenthesised) {
+	if (FORCE_PARENTHESES ? token.type !== SENTENCE_LETTERS : token.parenthesised) {
 		let td = document.createElement(elm)
 		td.innerText = '('
 		tr.appendChild(td)
@@ -266,7 +269,7 @@ function appendPhraseToTR(tr, token, elm='td', main_operator=false) {
 	if (main_operator) td.classList.add('mainOperator')
 	tr.appendChild(td)
 	for (let i = token.pre_args; i < token.pre_args+token.post_args; i++) appendPhraseToTR(tr, token.args[i], elm);
-	if (FORCE_PARENTHESES ? token.type !== CONSTANTS : token.parenthesised) {
+	if (FORCE_PARENTHESES ? token.type !== SENTENCE_LETTERS : token.parenthesised) {
 		let td = document.createElement(elm)
 		td.innerText = ')'
 		tr.appendChild(td)
@@ -274,9 +277,9 @@ function appendPhraseToTR(tr, token, elm='td', main_operator=false) {
 }
 
 function appendValuationToTR(tr, token, structure, height, from_depth, elm='td', main_operator=false) {
-	if ((FORCE_PARENTHESES ? token.type !== CONSTANTS : token.parenthesised) && token.depth > from_depth) {
+	if ((FORCE_PARENTHESES ? token.type !== SENTENCE_LETTERS : token.parenthesised) && token.depth > from_depth) {
 		let td = document.createElement(elm)
-		td.rowSpan = VARIABLES.aliases.length ** (height - token.depth)
+		td.rowSpan = CONSTANTS.aliases.length ** (height - token.depth)
 		td.innerText = '('
 		td.classList.add("parentheses")
 		tr.appendChild(td);
@@ -288,7 +291,7 @@ function appendValuationToTR(tr, token, structure, height, from_depth, elm='td',
 	//console.log(token.symbol, token.depth, from_depth, height)
 	if (token.depth > from_depth) {
 		let td = document.createElement(elm)
-		td.rowSpan = VARIABLES.aliases.length ** (height - token.depth)
+		td.rowSpan = CONSTANTS.aliases.length ** (height - token.depth)
 		tr.appendChild(td)
 		if (main_operator) td.classList.add('mainOperator');
 		td.classList.add(token.type.name);
@@ -301,9 +304,9 @@ function appendValuationToTR(tr, token, structure, height, from_depth, elm='td',
 
 	for (let i = token.pre_args; i < token.pre_args+token.post_args; i++) appendValuationToTR(tr, token.args[i], structure, height, from_depth, elm);
 	
-	if ((FORCE_PARENTHESES ? token.type !== CONSTANTS : token.parenthesised) && token.depth > from_depth) {
+	if ((FORCE_PARENTHESES ? token.type !== SENTENCE_LETTERS : token.parenthesised) && token.depth > from_depth) {
 		let td = document.createElement(elm)
-		td.rowSpan = VARIABLES.aliases.length ** (height - token.depth)
+		td.rowSpan = CONSTANTS.aliases.length ** (height - token.depth)
 		td.innerText = ')'
 		td.classList.add("parentheses")
 		tr.appendChild(td);
@@ -313,24 +316,24 @@ function appendValuationToTR(tr, token, structure, height, from_depth, elm='td',
 INVERT_ORDER = false
 function generateSimpleTable(phrase) {
 	if (typeof(phrase) == "string") phrase = scan(phrase)[0];
-	const propositional_variables = [...new Set(phrase.extractConstants())].sort() // extract & filter duplicates
+	const sentence_letters = [...new Set(phrase.extractSentenceLetters())].sort() // extract & filter duplicates
 	const max_depth = phrase.calcQuantifierHeight()
-	const flat_bv = phrase.extractBoundVars()
-	const bound_variables = Array(flat_bv.length/2).fill(0).map((_,i)=>[flat_bv[i*2]+1, flat_bv[i*2+1]]).sort()
+	const flat_vars = phrase.extractVars()
+	const variables = Array(flat_vars.length/2).fill(0).map((_,i)=>[flat_vars[i*2]+1, flat_vars[i*2+1]]).sort()
 
 	const table = document.createElement('table')
 	const thead = document.createElement('thead')
 	table.appendChild(thead)
 	const header = document.createElement('tr')
 	thead.appendChild(header)
-	// list variables
-	propositional_variables.forEach(p=>{
+	// list sentence letters
+	sentence_letters.forEach(p=>{
 		let th = document.createElement('th')
 		th.innerText = p
 		header.appendChild(th)
 	})
-	bound_variables.forEach(([depth,symbol], i)=>{
-		if (i>1 && bound_variables[i-1][0] == depth && bound_variables[i-1][1] == symbol) return;
+	variables.forEach(([depth,symbol], i)=>{
+		if (i>1 && variables[i-1][0] == depth && variables[i-1][1] == symbol) return;
 		let th = document.createElement('th')
 		th.innerText = symbol
 		header.appendChild(th)
@@ -344,38 +347,38 @@ function generateSimpleTable(phrase) {
 	// make 2**n rows
 	const tbody = document.createElement('tbody')
 	table.appendChild(tbody)
-	for (let i = 0; i < 2**propositional_variables.length; i++) {
+	for (let i = 0; i < 2**sentence_letters.length; i++) {
 		var row = document.createElement('tr')
 		// generate structure
-		const variable_assignments = {}
-		for (let j = 0; j < propositional_variables.length; j++) {
-			let pvar = propositional_variables[j]
+		const sentence_letter_assignments = {}
+		for (let j = 0; j < sentence_letters.length; j++) {
+			let letter = sentence_letters[j]
 			let value = (i >> j)&1
 			if (INVERT_ORDER) value = 1-value
-			variable_assignments[pvar] = value
+			sentence_letter_assignments[letter] = value
 			
 			let th = document.createElement('th')
 			th.innerText = CURRENT.TRUE_FALSE_SYMBOLS[value]
-			th.rowSpan = VARIABLES.aliases.length ** max_depth || 1
+			th.rowSpan = CONSTANTS.aliases.length ** max_depth || 1
 			row.appendChild(th)
 		}
 
 		if (max_depth == 0) {
 			row.insertCell() // empty td for border purposes
-			appendValuationToTR(row, phrase, [variable_assignments, relation_assignments], 0,-1, 'td', true)
+			appendValuationToTR(row, phrase, [sentence_letter_assignments, relation_assignments], 0,-1, 'td', true)
 			tbody.appendChild(row)
 			continue
 		}
 
-		for (let k = 0; k < VARIABLES.aliases.length ** max_depth; k++) { // TODO: handle empty domain case
+		for (let k = 0; k < CONSTANTS.aliases.length ** max_depth; k++) { // TODO: handle empty domain case
 			const quantifier_choices = []
 
-			// extract VARIABLES.aliases.length-ary digits of k
+			// extract CONSTANTS.aliases.length-ary digits of k
 			let n = k
 			for (let j=0; j < max_depth; j++) {
-				const this_choice = n % VARIABLES.aliases.length
+				const this_choice = n % CONSTANTS.aliases.length
 				quantifier_choices.unshift(this_choice)
-				n = (n-this_choice) / VARIABLES.aliases.length
+				n = (n-this_choice) / CONSTANTS.aliases.length
 			}
 
 			/*  find last non-zero, and go from here.
@@ -388,20 +391,20 @@ function generateSimpleTable(phrase) {
 			var min_depth = max_depth-1;
 			while (min_depth >= 0 && quantifier_choices[min_depth] == 0) min_depth--;
 
-			for (let j=0; j<bound_variables.length; j++) {
-				const [depth, val] = bound_variables[j];
-				//console.log(bound_variables[j], VARIABLES.aliases.length ** max_depth, k, min_depth, depth, j, quantifier_choices, VARIABLES.aliases[quantifier_choices[depth]])
-				// console.log(`${k}/${VARIABLES.aliases.length ** max_depth}) [${quantifier_choices.toString()}][${j}]. min_depth = ${min_depth}`)
+			for (let j=0; j<variables.length; j++) {
+				const [depth, val] = variables[j];
+				//console.log(variables[j], CONSTANTS.aliases.length ** max_depth, k, min_depth, depth, j, quantifier_choices, CONSTANTS.aliases[quantifier_choices[depth]])
+				// console.log(`${k}/${CONSTANTS.aliases.length ** max_depth}) [${quantifier_choices.toString()}][${j}]. min_depth = ${min_depth}`)
 				if (depth < min_depth) continue
-				if (j > 0 && bound_variables[j-1][0] == depth && bound_variables[j-1][1] == val) continue // skip duplicates. can't filter them out as a set bc arrays are references
+				if (j > 0 && variables[j-1][0] == depth && variables[j-1][1] == val) continue // skip duplicates. can't filter them out as a set bc arrays are references
 
 				const th = document.createElement('th')
-				th.innerText = VARIABLES.aliases[quantifier_choices[depth]]
-				th.rowSpan = VARIABLES.aliases.length ** (max_depth - depth - 1)
+				th.innerText = CONSTANTS.aliases[quantifier_choices[depth]]
+				th.rowSpan = CONSTANTS.aliases.length ** (max_depth - depth - 1)
 				row.appendChild(th)
 			}
 			row.insertCell()
-			appendValuationToTR(row, phrase, [variable_assignments, relation_assignments, quantifier_choices], max_depth, min_depth, 'td', true)
+			appendValuationToTR(row, phrase, [sentence_letter_assignments, relation_assignments, quantifier_choices], max_depth, min_depth, 'td', true)
 			tbody.appendChild(row)
 
 			row = document.createElement('tr')
@@ -424,16 +427,16 @@ function updateFormula() {
 
 function texify(line, token, structure, main_operator=false) {
 	
-	if (FORCE_PARENTHESES ? token.type !== CONSTANTS : token.parenthesised)
+	if (FORCE_PARENTHESES ? token.type !== SENTENCE_LETTERS : token.parenthesised)
 		line.push(structure ? "" : "(")
 	for (let i = 0; i < token.pre_args; i++) texify(line, token.args[i], structure);
 	
 	var symb = ""
 	if (main_operator) symb += "\\textcolor{red}{"
 	if (structure) {
-		if (token.type == CONSTANTS) symb += "\\textcolor{grey}{"
+		if (token.type == SENTENCE_LETTERS) symb += "\\textcolor{grey}{"
 		symb += CURRENT.TRUE_FALSE_SYMBOLS[token.valuate(structure)*1]
-		if (token.type == CONSTANTS) symb += "}"
+		if (token.type == SENTENCE_LETTERS) symb += "}"
 	} else {
 		symb += token.symbol
 	}
@@ -442,7 +445,7 @@ function texify(line, token, structure, main_operator=false) {
 	line.push(symb)
 	
 	for (let i = token.pre_args; i < token.pre_args+token.post_args; i++) texify(line, token.args[i], structure);
-	if (FORCE_PARENTHESES ? token.type !== CONSTANTS : token.parenthesised)
+	if (FORCE_PARENTHESES ? token.type !== SENTENCE_LETTERS : token.parenthesised)
 		line.push(structure ? "" : ")")
 }
 
@@ -453,7 +456,7 @@ function generateLaTeX() {
 
 	const phrase = scan(FORMULA_ELM.value)[0]
 	  
-	const propositional_variables = [...new Set(phrase.extractConstants())].sort() // extract & filter duplicates
+	const sentence_letters = [...new Set(phrase.extractSentenceLetters())].sort() // extract & filter duplicates
 	var out = ""
 	// list variables
 	var line = []
@@ -462,29 +465,29 @@ function generateLaTeX() {
 	
 	const tab_count = line.length
 	
-	out += '$' + propositional_variables.concat(line) .join(' & ') + "\\\\\ \n\\hline\n"
+	out += '$' + sentence_letters.concat(line) .join(' & ') + "\\\\\ \n\\hline\n"
 	
 	// make 2**n rows
-	for (let i = 0; i < 2**propositional_variables.length; i++) {
+	for (let i = 0; i < 2**sentence_letters.length; i++) {
 		let line = []
 		// generate structure
-		const variable_assignments = {}
-		for (let j = 0; j < propositional_variables.length; j++) {
-			let pvar = propositional_variables[j]
+		const sentence_letter_assignments = {}
+		for (let j = 0; j < sentence_letters.length; j++) {
+			let pvar = sentence_letters[j]
 			let value = (i >> j)&1
 			if (INVERT_ORDER) value = 1-value
-			variable_assignments[pvar] = value
+			sentence_letter_assignments[pvar] = value
 			
 			line.push(CURRENT.TRUE_FALSE_SYMBOLS[value])
 		}
 		
-		texify(line, phrase, [variable_assignments, {}], true)
+		texify(line, phrase, [sentence_letter_assignments, {}], true)
 		
 		out += '$' + line.join('$ & $') + "$\\\\\n\t"
 	}
 	
 	alert(
-	`\\begin{tabular}{${"c".repeat(propositional_variables.length)}|${"c".repeat(tab_count)}}\n`+
+	`\\begin{tabular}{${"c".repeat(sentence_letters.length)}|${"c".repeat(tab_count)}}\n`+
 		out+
 	"\\end{tabular}"
 	)
@@ -549,7 +552,7 @@ function addUptRow(tbody, num_rows, num_columns) {
 		addCheckboxLabel(newRow, `u-${num_rows+1}-${i+1}`)
 	for (let i=0; i<num_columns-1; i++)	
 		relation_assignments[i][num_rows-1] = INDETERMINATE
-	VARIABLES.aliases.push('')
+	CONSTANTS.aliases.push('')
 }
 function addUptCol(tbody, num_rows, num_columns) {
 	const head = document.createElement('th')
@@ -591,7 +594,7 @@ upt_shrink_col.addEventListener('click', ()=> {
 upt_shrink_row.addEventListener('click', ()=>{
 	const final_tr = UNARY_PREDICATE_TABLE.tBodies[0].lastElementChild
 	if (final_tr.rowIndex < 2) return;
-	VARIABLES.aliases.pop()
+	CONSTANTS.aliases.pop()
 
 	final_tr.previousElementSibling.firstElementChild.innerText = ''
 	;[...final_tr.previousElementSibling.cells].slice(2).forEach(cell=> cell.firstElementChild.indeterminate = true)
@@ -610,7 +613,7 @@ const recursive_remove_last = (array) => typeof(array)=="object" ? array.slice(0
 const BINARY_PREDICATE_TABLES = document.getElementsByClassName('binary-pred')
 const BPT_CONTAINER = document.getElementById('binary-preds')
 function add_bpt_rowcol() {
-	const new_indx = VARIABLES.aliases.length-1
+	const new_indx = CONSTANTS.aliases.length-1
 	for (let table_num = 0; table_num < BPT_CONTAINER.children.length; table_num++) {
 		const table = BPT_CONTAINER.children[table_num];
 		// add new headers
@@ -637,11 +640,11 @@ function add_bpt() {
 
 	const table = document.createElement('table')
 	table.classList = "true-false-grid binary-pred"
-	table.innerHTML = `<thead><th data-placeholder="R" contenteditable=true></th><td></td>${VARIABLES.aliases.map(v=>`<th>${v}</th>`).join('')}</thead>
-	<tbody>${VARIABLES.aliases.map((v,row)=>`<tr><th>${v}</th><td></td></tr>`).join('')}</tbody>`;
+	table.innerHTML = `<thead><th data-placeholder="R" contenteditable=true></th><td></td>${CONSTANTS.aliases.map(v=>`<th>${v}</th>`).join('')}</thead>
+	<tbody>${CONSTANTS.aliases.map((v,row)=>`<tr><th>${v}</th><td></td></tr>`).join('')}</tbody>`;
 
 	Array.prototype.forEach.call(table.tBodies[0].rows, (row, i)=> {
-		for (const j in VARIABLES.aliases)
+		for (const j in CONSTANTS.aliases)
 			addCheckboxLabel(row, `b-${+table_num}-${+i+1}-${+j+1}`)
 	})
 
@@ -649,7 +652,7 @@ function add_bpt() {
 	table.addEventListener('input', handle_bpt_input)
 
 	relation_assignments.splice(unary_pred_count + table_num, 0,
-		Array(VARIABLES.aliases.length).fill(0).map(x=>Array(VARIABLES.aliases.length).fill(INDETERMINATE)))
+		Array(CONSTANTS.aliases.length).fill(0).map(x=>Array(CONSTANTS.aliases.length).fill(INDETERMINATE)))
 	RELATIONS.aliases.splice(unary_pred_count + table_num, 0, '')
 	relation_argcounts.splice(unary_pred_count + table_num, 0, [1,1])
 }
@@ -676,7 +679,7 @@ function handle_bpt_input({target}) {
 }
 
 function set_var_name(index, newName) {
-	VARIABLES.aliases[index] = newName
+	CONSTANTS.aliases[index] = newName
 	// called after manually updating UPT, so we don't need to modify there
 	// modify BPTs
 	for (const table of BINARY_PREDICATE_TABLES) {
@@ -697,7 +700,6 @@ function create_connective_table(connective) {
 	table.classList.add('true-false-grid')
 
 	connective.args = [] // so we can call .valuate()
-	console.log(total_args);
 	table.innerHTML = `<caption>
 		<h3>${connective.fullname}</h3>
 		<label><input type=checkbox checked> Enable</label><br>

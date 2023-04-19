@@ -16,8 +16,6 @@
 			}
 			td:first-of-type { border-left: solid 1px black }
 			thead { border-bottom: solid 1px black }
-			.mainOperator { color: red }
-			.constant { color: #555; }
 			
 			input[value=custom] + label + fieldset { display: none }
 			input[value=custom]:checked + label + fieldset { display: block }
@@ -108,12 +106,11 @@
 			}
 
 
-			.relation {
-				color: green;
-			}
-			.parentheses {
-				visibility: hidden;
-			}
+
+			.mainOperator { color: red }
+			.sentence_letter { color: #555; }
+			.relation {	color: green; }
+			.parentheses { visibility: hidden; }
 
 		</style>
 	</head>
@@ -199,7 +196,7 @@
 			<thead>
 				<tr><th>Type <th>Hidden <th>Italic <th>Bold <th>Color
 			</thead>
-			<tr><th>Constants <td><input type=checkbox> <td><input type=checkbox> <td><input type=checkbox> <td><input type=color value=#555555>
+			<tr><th>Sentence Letters <td><input type=checkbox> <td><input type=checkbox> <td><input type=checkbox> <td><input type=color value=#555555>
 			<tr><th>Variables <td><input type=checkbox checked> <td><input type=checkbox checked> <td><input type=checkbox> <td><input type=color value=#555555>
 			<tr><th>Predicates <td><input type=checkbox> <td><input type=checkbox> <td><input type=checkbox> <td><input type=color value=#555555>
 			<tr><th>Connectives <td><input type=checkbox> <td><input type=checkbox> <td><input type=checkbox> <td><input type=color>
