@@ -4,7 +4,9 @@
 		<meta charset=utf-8>
 		<title>Semantic Tableux</title>
 		<style>
-/*			* {outline: dotted 1px red}*/
+
+			table { border-spacing: 0 }
+
 			td:first-child {
 				padding-right: 1em;
 			}
@@ -17,8 +19,8 @@
 				text-align: left;
 				padding-left: 5em;
 			}
-			.split, .splitL, .splitR {
-				background: url(./split.svg);
+
+			.splitL, .splitR {
 				padding: 0.5em;
 			}
 			.splitL {
@@ -33,14 +35,19 @@
 				background: url(./line.svg);
 				padding: 0;
 			}
-
-			.splitL, .splitR, .straight, .split {
+			.splitL, .splitR, .straight {
 				background-size: 100% 100%;
 			}
-			table { border-spacing: 0 }
+
 
 			table button {
 				flex-grow: 1;
+			}
+
+			table {	counter-reset: line_num; }
+			tr:not(.empty) { counter-increment: line_num; }
+			tr:not(.empty) td:first-child::before {
+				content: counter(line_num) ".";
 			}
 
 		</style>
@@ -49,8 +56,8 @@
 	<body>
 
 		<table id=tree>
-			<tr><td>1.<td contenteditable><td contenteditable>
-			<tr><td><td><button title="add node to branch">+</button> <button title="split branch">/\</button> <button title="close branch">X</button><td>
+			<tr><td><td contenteditable><td contenteditable>
+			<tr class=empty><td><td><button title="add node to branch">+</button> <button title="split branch">/\</button> <button title="close branch">X</button><td>
 		</table>
 
 		<script>
@@ -161,7 +168,6 @@
 
 			function make_editable(cell) {
 				const row = cell.parentElement
-				row.firstElementChild.innerText = row.rowIndex + '.'
 				row.lastElementChild.contentEditable = true
 				row.classList.remove('empty')
 
