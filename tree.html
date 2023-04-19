@@ -1,0 +1,259 @@
+<!DOCTYPE HTML>
+<html lang=en>
+	<head>
+		<meta charset=utf-8>
+		<title>Semantic Tableux</title>
+		<style>
+/*			* {outline: dotted 1px red}*/
+			td:first-child {
+				padding-right: 1em;
+			}
+			td {
+				padding: 0.2em 0.5em;
+				text-align: center;
+				vertical-align: top;
+			}
+			td:last-child {
+				text-align: left;
+				padding-left: 5em;
+			}
+			.split, .splitL, .splitR {
+				background: url(./split.svg);
+				padding: 0.5em;
+			}
+			.splitL {
+				background: url(./splitL.svg);
+				padding-right: 0;
+			}
+			.splitR {
+				background: url(./splitR.svg);
+				padding-left: 0;
+			}
+			.split, .splitL, .splitR {
+				background-size: 100% 100%;
+			}
+			table { border-spacing: 0 }
+		</style>
+	</head>
+	<body>
+		<h2>Attempt #1, table</h2>
+		<table>
+			<tr><td>1.<td colspan=4>~P			<td>SM
+			<tr><td>2.<td colspan=4>P⊃R			<td>SM
+			<tr><td>3.<td colspan=4>~(~Q≡R)		<td>SM
+			<tr><td><td colspan=4 class=split></tr>
+			<tr><td>4.<td colspan=2>~Q
+					  <td colspan=2>~~Q 		<td>3, ~≡D
+			<tr><td>5.<td colspan=2>~R
+					  <td colspan=2>R 			<td>3, ~≡D
+			<tr><td>6.<td colspan=2 rowspan=2 class=split>
+					  <td colspan=2>Q 			<td>4, ~~D
+			<tr><td><td colspan=2 class=split><td>
+			<tr><td>7.<td>~P<td>R<td>~P<td>R	<td>2, ⊃D
+			<tr><td><td>🗸<td>X 5,7<td>🗸<td>🗸<td>
+		</table>
+
+		<p>
+			This worked well, but let's try with a slightly more complex one
+		</p>
+
+		<table>
+			<tr><td>1.<td colspan=5>L⊃(C∨T)			<td>SM
+			<tr><td>2.<td colspan=5>(~L∨B)&(~B∨~C)	<td>SM
+			<tr><td>3.<td colspan=5>~(L⊃T)			<td>SM
+			<tr><td><td class=split colspan=5>
+													<td>SM
+			<tr><td>4.<td>~L
+					  <td colspan=4>C∨T				<td>1 ⊃D
+			<tr><td>5.<td>~L∨B
+					  <td colspan=4>~L∨B			<td>2 &D
+			<tr><td>6.<td>~B∨~C
+					  <td colspan=4>~B∨~C			<td>2 &D
+			<tr><td>7.<td>L
+					  <td colspan=4>L				<td>3 ~⊃D
+			<tr><td>8.<td>~T
+					  <td colspan=4>~T				<td>3 ~⊃D
+			<tr><td>  <td rowspan=7>X</td>
+					  <td colspan=4 class=split>	<td>
+			<tr><td>9.<td colspan=3>C
+					  <td>T 						<td> 4 ∨D
+			<tr><td>  <td colspan=3 class=split>
+					  <td rowspan=5>X 				<td>
+			<tr><td>10.<td>~L
+					   <td colspan=2>B 				<td> 4 ∨D
+			<tr><td>   <td rowspan=3>X
+					   <td colspan=2 class=split>	<td>
+			<tr><td>11.<td>~B
+					   <td>~C 						<td> 4 ∨D
+			<tr><td>   <td>X
+					   <td>X						<td>
+
+		</table>
+		<!-- rowspans mainly just for ease of manual typing, idk if i'd autogenerate it -->
+
+		<p>
+			Unfortunately, the split lines aren't quite working.
+		</p>
+
+		<h2>Attempt #2, seperate leftright split</h2>
+
+		<p>What if we split up the split into two images</p>
+
+		<img src=splitL.svg><img src=splitR.svg>
+
+
+		<table>
+			<tr><td>1.<td colspan=5>L⊃(C∨T)			<td>SM
+			<tr><td>2.<td colspan=5>(~L∨B)&(~B∨~C)	<td>SM
+			<tr><td>3.<td colspan=5>~(L⊃T)			<td>SM
+			<tr><td><td class=splitL colspan=1><td class=splitR colspan=4>
+													<td>SM
+			<tr><td>4.<td>~L
+					  <td colspan=4>C∨T				<td>1 ⊃D
+			<tr><td>5.<td>~L∨B
+					  <td colspan=4>~L∨B			<td>2 &D
+			<tr><td>6.<td>~B∨~C
+					  <td colspan=4>~B∨~C			<td>2 &D
+			<tr><td>7.<td>L
+					  <td colspan=4>L				<td>3 ~⊃D
+			<tr><td>8.<td>~T
+					  <td colspan=4>~T				<td>3 ~⊃D
+			<tr><td>  <td rowspan=7>X</td>
+					  <td colspan=3 class=splitL><td class=splitR>	<td>
+			<tr><td>9.<td colspan=3>C
+					  <td>T 						<td> 4 ∨D
+			<tr><td>  <td class=splitL><td colspan=2 class=splitR>
+					  <td rowspan=5>X 				<td>
+			<tr><td>10.<td>~L
+					   <td colspan=2>B 				<td> 4 ∨D
+			<tr><td>   <td rowspan=3>X
+					   <td class=splitL><td class=splitR>	<td>
+			<tr><td>11.<td>~B
+					   <td>~C 						<td> 4 ∨D
+			<tr><td>   <td>X
+					   <td>X						<td>
+
+		</table>
+		<p>
+			Well, that flopped a little. And it can't be fixed by switching around the colspans unfortunately.
+		</p>
+
+		<p>
+			If you could do <code>transform: translateX(100%) scaleX(-1); transform-origin:25%</code> but with the 100% referring to the <i>next</i> elements' width, this could be salvagable. But that would need js 
+		</p>
+
+		<p>
+			I messed around a bit with flexbox and grid but as far as I can tell there's no css-only way of solving this :(
+			<br>maaaybe there's some way of doing it with grid but not that I could figure it out
+		</p>
+
+		<p>
+			I attempted forcing each split to divide evenly in half, ie each branch has the same width. But this still required js and also made the tree needlessly wide
+		</p>
+		<h2>Attempt #3, Resort to js</h2>
+		<style>
+			.js .splitL {
+				background: url(./splitR.svg);
+				background-size: 100% 100%;
+			}
+			.js .splitR {
+				background: url(./splitL.svg);
+				background-size: 100% 100%;
+			}
+		</style>
+		
+		
+		<table class="js">
+			<tr><td>1.<td colspan=5>L⊃(C∨T)			<td>SM
+			<tr><td>2.<td colspan=5>(~L∨B)&(~B∨~C)	<td>SM
+			<tr><td>3.<td colspan=5>~(L⊃T)			<td>SM
+			<tr><td><td class=splitL colspan=1><td class=splitR colspan=4>
+													<td>SM
+			<tr><td>4.<td>~L
+					  <td colspan=4>C∨T				<td>1 ⊃D
+			<tr><td>5.<td>~L∨B
+					  <td colspan=4>~L∨B			<td>2 &D
+			<tr><td>6.<td>~B∨~C
+					  <td colspan=4>~B∨~C			<td>2 &D
+			<tr><td>7.<td>L
+					  <td colspan=4>L				<td>3 ~⊃D
+			<tr><td>8.<td>~T
+					  <td colspan=4>~T				<td>3 ~⊃D
+			<tr><td>  <td rowspan=7>X</td>
+					  <td colspan=3 class=splitL><td class=splitR>	<td>
+			<tr><td>9.<td colspan=3>C
+					  <td>T 						<td> 4 ∨D
+			<tr><td>  <td class=splitL><td colspan=2 class=splitR>
+					  <td rowspan=5>X 				<td>
+			<tr><td>10.<td>~L
+					   <td colspan=2>B 				<td> 4 ∨D
+			<tr><td>   <td rowspan=3>X
+					   <td class=splitL><td class=splitR>	<td>
+			<tr><td>11.<td>~B
+					   <td>~C 						<td> 4 ∨D
+			<tr><td>   <td>X
+					   <td>X						<td>
+
+		</table>
+
+		<script>
+			var max_ratio = 99
+			var min_length = 0
+			fix_lines = ()=>[...document.querySelectorAll('.js .splitL')].reverse().forEach(left=> {
+					const right = left.nextElementSibling
+
+					left.width = right.width = ''
+
+
+					var l = left.offsetWidth, r = right.offsetWidth
+					var midpoint = (l+r)/2
+					if (l/2 < min_length) {
+						left.width = min_length * 2
+						l = left.offsetWidth
+						midpoint = (l+r)/2
+					}
+					if (r/2 < min_length) {
+						right.width = min_length * 2
+						r = right.offsetWidth
+						midpoint = (l+r)/2
+					}
+
+					if (l*max_ratio < r) {
+						left.width = r/max_ratio
+					} else if (r*max_ratio < l) {
+						right.width = l/max_ratio
+					}
+					l = left.offsetWidth, r = right.offsetWidth
+					midpoint = (l+r)/2
+
+
+
+
+					left.style.transform = `translateX(${midpoint}px)`
+					right.style.transform = `translateX(${-midpoint}px)`
+				}
+			)
+			fix_lines()
+		</script>
+
+		<p>
+			This actually, suprisingly, looks not that great!
+		</p>
+
+		<p>
+			I think the main problem is having one super short line and one super long line, which happens when one of the branch's widths is way bigger than than the other ones
+			<br>
+			So I made a slider to constrain this!
+
+			<br><input type=range min=1 max=5 step=0.01 oninput="max_ratio = +this.value; fix_lines()">
+		</p>
+
+		<p>
+			But I feel like I misidentified the problem there, it's more of a problem when a branch is tiny than when theyre in an intense ratio. 
+			<br>So I tried making a slider for minimum branch length!
+			<br><input type=range min=5 max=50 step=0.1 oninput="min_length = +this.value; fix_lines()">
+		</p>
+		<p>idk it's not perfect.. but I think I'll stop there. The tree looks fine and we have two sliders to play with yummy yummy I love putting way too many controls in
+		</p>
+	</body>
+</html>
