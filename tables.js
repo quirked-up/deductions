@@ -169,6 +169,8 @@ new TokenType("negation", ['!', '~', '¬', '\\lnot', 'NOT'], {post_args:1, displ
 	valuate: [1,0,INDETERMINATE] }, "Negation (NOT)")
 new TokenType("disjunction", ['v', '∨', '|', '||', '+', '\\lor', 'OR', '\\/'], {pre_args:1, post_args:1, display:['CONNECTIVES',2], 
 	valuate: [[0,1,INDETERMINATE],[1,1,1],[INDETERMINATE,1,INDETERMINATE]] }, "Inclusive Disjunction (OR)")
+new TokenType("exclusive_disjunction", ['^', '⊻', '⊕', '\\oplus', 'XOR'], {pre_args:1, post_args:1, display:['CONNECTIVES',3], 
+	valuate: [[0,1,INDETERMINATE],[1,0,INDETERMINATE],[INDETERMINATE,INDETERMINATE,INDETERMINATE]] }, "Exclusive Disjunction (XOR)")
 new TokenType("conjunction", ['&', '∧', '^', '&&', '•', '.', '\\land', 'AND', '/\\'], {pre_args:1, post_args:1, display:['CONNECTIVES',1], 
 	valuate: [[0,0,0],[0,1,INDETERMINATE],[0,INDETERMINATE,INDETERMINATE]] }, "Conjunction (AND)")
 new TokenType("implication", ['>', '→', '⊃', '\\implies', '->', 'IMPLIES'], {pre_args:1, post_args:1, display:['CONNECTIVES',4], 
