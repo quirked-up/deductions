@@ -43,10 +43,17 @@
 				position: absolute;
 				opacity: 0;
 			}
-			.true-false-grid label {
+			.true-false-grid.true-false-grid caption input {
+				opacity: 1;
+				position: static;
+			}
+			.true-false-grid input+label {
+				padding: 0 0.2em;
 				border: solid black 1px;
 				border-radius: 3px;
-				padding: 0 0.2em;
+			}
+			.true-false-grid input:disabled+label {
+				border: none;
 			}
 			.true-false-grid input:indeterminate+label {
 				border-color: #444;
@@ -75,7 +82,7 @@
 			}
 
 			/* style binary predicate tables */
-			#binary-preds {
+			#binary-preds, #connectives {
 				display: flex;
 				flex-direction: row;
 				flex-wrap: wrap;
@@ -90,6 +97,10 @@
 				background: url(braces.webp);
 				background-size: 200% 120%;
 				background-position: 30% 20%;
+			}
+
+			summary h2 {
+				display: inline
 			}
 
 			tr {
@@ -107,8 +118,6 @@
 		</style>
 	</head>
 	<body>
-		
-		<hr>
 		<h2>Truth Table</h2>
 		<label>Formula: <input id=formula oninput="updateFormula()" placeholder="p∨¬p"></label>
 		
@@ -119,15 +128,18 @@
 		</div>
 		
 		<hr>
+		<details><summary><h2>Connectives</h2></summary>
+		<div id="connectives"><!-- populated by js---></div>
+		</details>
 
-		<h2>Domain & Predicates</h2>
+		<details><summary><h2>Domain & Predicates</h2></summary>
 		<h3>Unary predicates</h3>
-		<table id="unary-pred" class="true-false-grid">
+		<table id=unary-pred class="true-false-grid">
 			<thead>
 				<tr><th></th><td></td><th data-placeholder="P" contenteditable=true></th><td rowspan="2"><button>-</button></tr>
 			</thead>
 			<tbody>
-				<tr><th data-placeholder="a" contenteditable=true></th><td></td><td><input type=checkbox id=u-1-1><label for=u-1-1></label></td></tr>
+				<tr><th data-placeholder="a" contenteditable=true></th><td></td><td><input type=checkbox><label for=u-1-1></label></td></tr>
 			</tbody>
 			<tbody><tr><th colspan=2><button>-</button></th></tr></tbody>
 		</table>
@@ -136,9 +148,11 @@
 
 		<div id=binary-preds></div>
 		<button onclick=add_bpt()>+</button><button onclick=remove_bpt()>-</button><br>
+		</details>
 
 		<hr>
 		
+		<details><summary><h2>Styling</h2></summary>
 		<form oninput="if(!event.target.classList.contains('togglevisible')) updateFormula()">
 			<input class=togglevisible type=checkbox checked id=toggleconnective hidden>
 			<fieldset oninput="update_current('CONNECTIVES',+CONNECTIVES.value)">
@@ -191,8 +205,10 @@
 			<tr><th>Connectives <td><input type=checkbox> <td><input type=checkbox> <td><input type=checkbox> <td><input type=color>
 			<tr><th>Main <td><input type=checkbox> <td><input type=checkbox> <td><input type=checkbox> <td><input type=color value=#ff0000> <td> (Top <input min=0 step=1 style="width:3em" value=1 type=number> connectives)</td>
 		</table><br>
+		</details>
 
 		<button onclick="generateLaTeX()">Generate LaTeX</button><br>
 		<script src="tables.js" onload="updateFormula()"></script>
+
 	</body>
 </html>
