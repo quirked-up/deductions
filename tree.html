@@ -17,7 +17,9 @@
 			}
 			td:last-child {
 				text-align: left;
-				padding-left: 5em;
+			}
+			td:nth-last-child(2) {
+				width: 4em;
 			}
 
 			.splitL, .splitR {
@@ -50,14 +52,23 @@
 				content: counter(line_num) ".";
 			}
 
+
+			[contenteditable]:empty::after {
+				content: " ";
+				display: block;
+				width: 100%;
+				min-width: 2em;
+				height: 1em;
+				border-bottom: dashed 1px black;
+			}
 		</style>
 	</head>
 
 	<body>
 
 		<table id=tree>
-			<tr><td><td contenteditable><td contenteditable>
-			<tr class=empty><td><td><button title="add node to branch">+</button> <button title="split branch">/\</button> <button title="close branch">X</button><td>
+			<tr><td><td contenteditable><td></td><td contenteditable></td>
+			<tr class=empty><td><td><button title="add node to branch">+</button> <button title="split branch">/\</button> <button title="close branch">X</button><td><td>
 		</table>
 
 		<script>
