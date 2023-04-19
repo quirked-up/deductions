@@ -1,4 +1,4 @@
-// TODO: make deleting variables work
+// TODO:
 // rename to more sensible names
 // n-ary predicates
 // functions
@@ -495,7 +495,7 @@ function generateLaTeX() {
 
 
 // make the unary predicate table interactable
-const relation_assignments = []
+var relation_assignments = []
 const UNARY_PREDICATE_TABLE = document.getElementById('unary-pred')
 var unary_pred_count = 0
 UNARY_PREDICATE_TABLE.querySelector('input').indeterminate = true
@@ -596,7 +596,16 @@ upt_shrink_row.addEventListener('click', ()=>{
 	final_tr.previousElementSibling.firstElementChild.innerText = ''
 	;[...final_tr.previousElementSibling.cells].slice(2).forEach(cell=> cell.firstElementChild.indeterminate = true)
 	final_tr.remove()
+
+	for (const table of BINARY_PREDICATE_TABLES) {
+		table.tBodies[0].lastElementChild.remove()
+		for (const row of table.rows)
+			row.lastElementChild.remove()
+	}
+
+	relation_assignments = relation_assignments.map(recursive_remove_last)
 })
+const recursive_remove_last = (array) => typeof(array)=="object" ? array.slice(0, -1).map(recursive_remove_last) : array
 
 const BINARY_PREDICATE_TABLES = document.getElementsByClassName('binary-pred')
 const BPT_CONTAINER = document.getElementById('binary-preds')
