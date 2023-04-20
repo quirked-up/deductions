@@ -77,7 +77,7 @@
 			<tr class=empty><td><td><button title="add node to branch">+</button> <button title="split branch">/\</button> <button title="close branch">X</button><td><td>
 			
 			<caption>
-				<button title="undo last action">Undo</button><button title="redo last action" disabled>Redo</button>
+				<button disabled title="undo last action">Undo</button><button disabled title="redo last action">Redo</button>
 			</caption>
 		</table>
 
@@ -118,13 +118,14 @@
 				}
 
 				const td = target.parentElement,
-				tr = td.parentElement
-				const table = tr.parentElement.parentElement
+				tr = td.parentElement,
+				table = tr.parentElement.parentElement
 
 				var col = 0
 				for (let i=0; i<td.cellIndex; i++)
 					col += tr.cells[i].colSpan + +(tr.cells[i].dataset.psuedo_colspan || 0)
 				var total_cols = col
+				col += +(tr.cells[td.cellIndex].dataset.psuedo_colspan || 0)
 				for (let i=td.cellIndex; i<tr.cells.length; i++)
 					total_cols += tr.cells[i].colSpan + +(tr.cells[i].dataset.psuedo_colspan || 0)
 
@@ -135,14 +136,14 @@
 						make_editable(cell_in_col(row, col))
 
 						if (tr.rowIndex < i) {
-							td.replaceWith(document.createElement('td'))
+							replace_cell(td, document.createElement('td'))
 							for (let j=tr.rowIndex; j<i; j++) {
 								let td = cell_in_col(table.rows[j], col)
 								td.classList.add('straight')
 							}
 						}
 
-						cell_in_col(get_or_make_row(table, i+1, total_cols), col).replaceWith(td)
+						replace_cell(cell_in_col(get_or_make_row(table, i+1, total_cols), col), td)
 						break
 
 					case "split branch":
@@ -157,12 +158,12 @@
 						const left = document.createElement('td')
 						left.className = "splitL"
 						left.rowSpan = right.rowSpan = i - tr.rowIndex
-						td.replaceWith(right)
-						right.before(left)
+						replace_cell(td, left)
+						left.nextElementSibling.before(right)
 
 						for (let j=tr.rowIndex+1; j<i; j++) {
 							let td = cell_in_col(table.rows[j], col+1)
-							td.dataset.psuedo_colspan = 2
+							td.dataset.psuedo_colspan = +(td.previousElementSibling.dataset.psuedo_colspan || 0) + 2
 							td.previousElementSibling.remove()
 						}
 
@@ -174,15 +175,15 @@
 						let slot = make_editable(cell_in_col(table.rows[i], col))
 						make_editable(slot.nextElementSibling) 
 
-						cell_in_col(get_or_make_row(table, i+1, total_cols), col).replaceWith(td)
-						td.nextElementSibling.replaceWith(td.cloneNode(true))
+						replace_cell(cell_in_col(get_or_make_row(table, i+1, total_cols), col), td) // table.rows[i+1].cell[col].replaceWith(td), but rowspan & colspan aware
+						replace_cell(td.nextElementSibling, td.cloneNode(true))
 						break
 
 					case "close branch":
 						let new_td = document.createElement('td')
 						new_td.contentEditable = true
 						new_td.innerText = '🗸'
-						td.replaceWith(new_td)
+						replace_cell(td, new_td)
 						break
 				}
 				fix_lines()
@@ -207,12 +208,12 @@
 			function widen_cell_in_col(row, target_col) {
 				var cols = 0
 				for (let i=0; i<row.cells.length; i++) {
-					cols += row.cells[i].colSpan
-					if (cols > target_col)
-						return row.cells[i].colSpan++
 					cols += +(row.cells[i].dataset.psuedo_colspan || 0)
 					if (cols > target_col)
 						return row.cells[i].dataset.psuedo_colspan++
+					cols += row.cells[i].colSpan
+					if (cols > target_col)
+						return row.cells[i].colSpan++
 				}
 				throw `${row} has no column ${target_col}`
 			}
@@ -224,7 +225,7 @@
 
 				const td = document.createElement('td')
 				td.contentEditable = true
-				cell.replaceWith(td)
+				replace_cell(cell, td)
 
 				return td
 			}
@@ -240,6 +241,11 @@
 			}
 
 
+			function replace_cell(cell, new_cell) {
+				new_cell.dataset.psuedo_colspan = cell.dataset.psuedo_colspan || 0
+				new_cell.colSpan = cell.colSpan
+				cell.replaceWith(new_cell)
+			}
 
 			var max_ratio = 99
 			var min_length = 0
