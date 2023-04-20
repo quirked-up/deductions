@@ -68,6 +68,9 @@
 			table caption {
 				margin-top: 2em;
 			}
+
+			.lineref { font-style: italic; }
+			.lineref[data-ref_indx] { color: #333; }
 		</style>
 	</head>
 
@@ -84,6 +87,7 @@
 
 
 		<script>
+			/* Handle add, split, and close branch controls. & history */
 			const history = [[], []]
 
 			tree.addEventListener('input', fix_lines)
@@ -188,6 +192,7 @@
 				}
 				fix_lines()
 			})
+			
 			function next_empty_row(table, total_cols, after_row_indx=0) {
 				var i
 				for (i=after_row_indx; i<table.rows.length; i++)
@@ -247,6 +252,7 @@
 				cell.replaceWith(new_cell)
 			}
 
+			/* make branch splits display correctly */
 			var max_ratio = 99
 			var min_length = 0
 			function fix_lines () {
@@ -283,6 +289,128 @@
 					left.style.transform = `translateX(${midpoint}px)`
 					right.style.transform = `translateX(${-midpoint}px)`
 				})
+			}
+
+			/* track line references */ 
+			// 1. wrap numbers in spans
+			// 2. merge adjacent spans
+			// 3. calculate referring rowIndex of each
+			// 4. restore old caret position, to not disturb typing
+			tree.addEventListener('input', ({target})=>{
+				if (target.nextElementSibling != null) return;
+				// only last cell in row
+
+
+				// save current caret (typing cursor) position
+				text_length_cache.clear()
+				var {anchorNode, anchorOffset} = getSelection()
+				if (anchorNode.nodeType != Node.TEXT_NODE) {
+					// sometimes (eg after pasting) the caret is anchored to a non-text node, and the ancherOffset refers to the number of nodes, not characters, after which the caret is. to make this into something our code can handle, we insert an empty text node where the caret is and process from there. this will get removed in the .normalize() later anyway.
+					if (anchorOffset == anchorNode.childNodes.length)
+						anchorNode.append('')
+					else
+						anchorNode.childNodes[anchorOffset].before('')
+					anchorNode = anchorNode.childNodes[anchorOffset]
+					anchorOffset = 0
+				}
+				const offset = get_caret_position(anchorNode, anchorOffset)
+
+				// put numbers into spans
+				split_numbers(target)
+				target.normalize() // remove empty text nodes we've made
+				handle_linerefs(tree, target)
+			
+				// restore caret position
+				text_length_cache.clear()
+				set_caret_position(target, offset)
+			})
+
+			function split_numbers(node) {
+				if (node.nodeType == Node.TEXT_NODE) {
+					const match = /\d+/.exec(node.nodeValue)
+					if (match == null) return
+					const num_node = node.splitText(match.index)
+					const remainder = num_node.splitText(match[0].length)
+
+					const span = document.createElement('span')
+					span.className = 'lineref'
+					num_node.replaceWith(span)
+					span.appendChild(num_node)
+
+					split_numbers(remainder)
+				} else {
+					;[...node.childNodes].forEach(split_numbers) // cache into array so we don't call on newly created nodes
+					if (node.className == 'lineref') node.replaceWith(...node.childNodes)
+				}
+			}
+
+			function handle_linerefs(table, parentElm=table) {
+				const nonempty_rows = []
+				for (const row of table.rows)
+					if (!row.classList.contains('empty'))
+						nonempty_rows.push(row)
+
+				const linerefs = table.getElementsByClassName('lineref')
+				for (span of linerefs) {
+					// collapse adjacent lineref spans
+					while (span.nextSibling && span.nextSibling.className == 'lineref') {
+						span.append(...span.nextSibling.childNodes)
+						span.nextSibling.remove()
+					}
+					// BUG: this ignores eg <span><span class=lineref>12</span></span><span><span class=lineref>34</span></span>
+					
+					if (span.innerText > nonempty_rows.length) {
+
+					} else {
+						span.dataset.ref_indx = nonempty_rows[span.innerText-1].rowIndex
+					}
+				}
+			}
+
+			var text_length_cache = new Map()
+			function text_length(node) {
+				if (text_length_cache.has(node))
+					return text_length_cache.get(node)
+
+				var len
+				if (node.nodeType == Node.TEXT_NODE)
+					len = node.length
+				else if (node.nodeType == Node.ELEMENT_NODE) 
+					len = +(node.className != 'lineref') + Array.prototype.reduce.call(node.childNodes, (sum,child)=>sum + text_length(child), 0)
+				else
+					len = 0
+
+				text_length_cache.set(node, len)
+				return len
+			}
+
+			function get_caret_position(node, offset) {
+				while (!node.attributes || !node.attributes.contenteditable) {
+					//console.log(node, offset)
+					while (node.previousSibling) {
+						node = node.previousSibling
+						//console.log(node, offset)
+						offset += text_length(node)
+					}
+					node = node.parentNode
+				}
+				return offset
+			}
+
+			function set_caret_position(node, offset) {
+				if (node.nodeType == Node.TEXT_NODE) {
+					getSelection().setPosition(node, offset)
+					return true
+				}
+				for (const child of node.childNodes) {
+					// console.log(child, text_length(child), offset)
+					let len = text_length(child)
+					if (len >= offset)
+						return set_caret_position(child, offset)
+					offset -= len 
+				}
+				// console.log(offset)
+				return false
 			}
 		</script>
 	</body>
